@@ -1,5 +1,5 @@
 public abstract class Mob {
-    protected int ATK, DEF, HP;
+    protected int ATK, DEF, HP, xpos, ypos;
     public Mob(int ATK, int DEF, int HP){
         this.ATK = ATK;
         this.DEF = DEF;
