@@ -8,7 +8,17 @@ public abstract class Mob {
     public void takeDamage(int dmg){
         HP -= dmg;
     }
-    public void move(){
+    public void setPos(int xpos, int ypos){
         // TODO: Move function
+        this.xpos = xpos;
+        this.ypos = ypos;
+    }
+
+    // Get pos
+    public int getXPos(){
+        return this.xpos;
+    }
+    public int getYPos(){
+        return this.xpos;
     }
 }

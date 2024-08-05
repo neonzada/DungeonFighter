@@ -1,5 +1,5 @@
 public class Hero extends Mob{
-    protected int bagSize;
+    protected int bagSize, xpos, ypos;
     protected String name;
     public Hero(int ATK, int DEF, int HP, String name){
         super(ATK, DEF, HP);
@@ -42,5 +42,9 @@ public class Hero extends Mob{
     }
     public void setName(String name){
         this.name = name;
+    }
+    public void setPos(int x, int y){
+        this.xpos = x;
+        this.ypos = y;
     }
 }

@@ -9,13 +9,16 @@ public class UI implements ActionListener{
         CHAR_SELECTION,
         STAT_MENU,
         INGAME,
-        POSTGAME,
-        DEBUG
+        POSTGAME
     }
+
+    private Engine gameEngine;
+    private boolean debugMode, retryGame;
+
     private String chosenClass;
-    private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame, debugFrame;
-    private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel, debugPanel;
-    private JButton playButton, debugButton, quitButton, nextButton, readyButton;
+    private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame;
+    private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel;
+    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, forfeitButton;
     private JButton[][] tiles;
     private JLabel barbLabel, palLabel, warLabel;
     private JTextField nameBox;
@@ -27,6 +30,7 @@ public class UI implements ActionListener{
 
     public UI(){
         chosenClass = null;
+        debugMode = false;
         // Initialize atr points with 0
         statArray = new int[3];
         for(int i = 0; i < 3; i++){
@@ -167,6 +171,12 @@ public class UI implements ActionListener{
                 statInc = new JButton[3];
                 for(int i = 0; i < 3; i++){
                     statInc[i] = new JButton("+");
+                    statInc[i].addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e){
+                            incrementaAtributo(e);
+                        }
+                    });
                     statPanel.add(statInc[i]);
                 }
 
@@ -181,15 +191,18 @@ public class UI implements ActionListener{
                 statDec = new JButton[3];
                 for(int i = 0; i < 3; i++){
                     statDec[i] = new JButton("-");
+                    statDec[i].addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e){
+                            decrementaAtributo(e);
+                        }
+                    });
                     statPanel.add(statDec[i]);
                 }
 
                 readyButton = new JButton("START GAME");
                 readyButton.addActionListener(this);
                 statPanel.add(readyButton);
-
-
-                // TODO: fix this trash code Action listeners for everyone! YAY
 
 
                 statFrame.add(statPanel, BorderLayout.CENTER);
@@ -202,9 +215,11 @@ public class UI implements ActionListener{
 
             case INGAME:
                 // start the engine, maybe multithread implementation
-                // new Engine(chosenClass);
-                charFrame.setVisible(false);
-                charFrame.dispose();
+                // i think we should start on the main function...
+                gameEngine = new Engine(chosenClass, statArray, debugMode, retryGame);
+                gameEngine.run();
+                statFrame.setVisible(false);
+                statFrame.dispose();
 
                 // Creating ingame frame
                 ingameFrame = new JFrame("Dungeon Fighter - Ingame");
@@ -212,7 +227,7 @@ public class UI implements ActionListener{
                 // Creating ingame panel
                 ingamePanel = new JPanel();
                 ingamePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
-                ingamePanel.setLayout(new GridLayout(5, 10));
+                ingamePanel.setLayout(new GridLayout(0, 10));
 
                 // 5x10 grid with top and bottom tiles!
                 botTileIcon = new ImageIcon("img/bottile64.png");
@@ -231,9 +246,25 @@ public class UI implements ActionListener{
                     }
                 }
 
+                // stat labels momento
+                for(int i = 0; i < 3; i++){
+                    ingamePanel.add(statLabels[i]);
+                }
+
+                // dica numero 1, e um pais da europa
+                tipButton = new JButton("Dica");
+                tipButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e){
+                        // show tips, call engine function maybe
+                    }
+                });
+
+                // what a coward
+                forfeitButton = new JButton("Sair");
+                forfeitButton.addActionListener(this);
 
                 ingameFrame.add(ingamePanel, BorderLayout.CENTER);
-                ingameFrame.setSize(1280, 720);
                 ingameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 ingameFrame.setResizable(false);
                 ingameFrame.pack();
@@ -244,25 +275,19 @@ public class UI implements ActionListener{
             case POSTGAME:
                 // show if the user won or lost, as well as buttons to restart game
                 // (same mob pos(and count?)) or new game (new mob pos (and count?))
-                break;
-            
-            case DEBUG:
-                // literally just makes the mobs visible and plays like a normal game
+                // engine.getFinalState() returns 1 if won, 0 if lost
+                // if(engine.getFinalState()){
+                //    // do win shit
+                //}else{
+                //    // do lose shit
+                //}
                 break;
             
             default:
                 // default case
+                System.out.println("nao sei como chegou aqui lol");
         }
     }
-    
-    // meh, i wanted to do it the cool way:
-    // playButton.addActionListener(new ActionListener(){
-    //  @Override
-    //  public void actionPerformed(ActionEvent e){
-    //    setCurrentWindow(windowState.INGAME);
-    //    createWindow(currentWindow);
-    //  }
-    //});
 
     // que bagulho feio
     @Override
@@ -271,15 +296,20 @@ public class UI implements ActionListener{
             setCurrentWindow(windowState.CHAR_SELECTION);
             createWindow(currentWindow);
         }else if(e.getSource().equals(nextButton)){
-            // start the engine here perhaps?
-            // new Engine(chosenClass);
             setCurrentWindow(windowState.STAT_MENU);
             createWindow(currentWindow);
         }else if(e.getSource().equals(readyButton)){
+            debugMode = false;
+            retryGame = false;
             setCurrentWindow(windowState.INGAME);
             createWindow(currentWindow);
         }else if(e.getSource().equals(debugButton)){
-            setCurrentWindow(windowState.DEBUG);
+            debugMode = true;
+            retryGame = false;
+            setCurrentWindow(windowState.INGAME);
+            createWindow(currentWindow);
+        }else if(e.getSource().equals(forfeitButton)){
+            setCurrentWindow(windowState.POSTGAME);
             createWindow(currentWindow);
         }else if(e.getSource().equals(quitButton)){
             // quit (should I call System.exit(0)?)
@@ -290,11 +320,51 @@ public class UI implements ActionListener{
     }
 
     // Update stat labels in the stat screen
-    private void updateStatLabels(){
+    private void updateStatLabels(int[] statArray){
         statLabels[0].setText("ATK: " + statArray[0]);
         statLabels[1].setText("DEF: " + statArray[1]);
         statLabels[2].setText("HP: " + statArray[2]);
     }
+
+    // Metodos para incrementar e decrementar atributos
+    // wtf que merda, quero fazer de outro jeito! but hey, it werks
+    public void incrementaAtributo(ActionEvent e){
+        int res = 0;
+        for(int i = 0; i < 3; i++){
+            res += statArray[i];
+        }
+        //TODO: definir o numero maximo de atributos em algum lugar do codigo
+        if(res < 20){
+            if(e.getSource().equals(statInc[0])){
+                statArray[0]++;
+            }
+            if(e.getSource().equals(statInc[1])){
+                statArray[1]++;
+            }
+            if(e.getSource().equals(statInc[2])){
+                statArray[2]++;
+            }
+        }else{
+            //TODO: mostra que nao tem ponto sobrando
+        }
+        //update jlabels
+        updateStatLabels(statArray);
+    }
+
+    public void decrementaAtributo(ActionEvent e){
+        // no negative attributes!
+        if((e.getSource().equals(statDec[0])) && (statArray[0] > 0)){
+            statArray[0]--;
+        }
+        if((e.getSource().equals(statDec[1])) && (statArray[1] > 0)){
+            statArray[1]--;
+        }
+        if((e.getSource().equals(statDec[2])) && (statArray[2] > 0)){
+            statArray[2]--;
+        }
+        //update jlabels
+        updateStatLabels(statArray);
+        }
 
     // Get and set current window
     public void setCurrentWindow(windowState window){
