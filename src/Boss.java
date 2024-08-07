@@ -1,8 +1,6 @@
-public class Boss extends Mob {
-    private int type;
-    public Boss(int ATK, int DEF, int HP, int type){
-        super(ATK, DEF, HP);
-        this.type = type;
+public class Boss extends Monster {
+    public Boss(int ATK, int DEF, int HP, int xpos, int ypos, int type){
+        super(ATK, DEF, HP, xpos, ypos, type);
     }
     // TODO: Charge attack maybe?
     // Different attributes, regen maybe?

@@ -1,8 +1,8 @@
 public class Hero extends Mob{
     protected int bagSize, xpos, ypos;
     protected String name;
-    public Hero(int ATK, int DEF, int HP, String name){
-        super(ATK, DEF, HP);
+    public Hero(int ATK, int DEF, int HP, int xpos, int ypos, String name){
+        super(ATK, DEF, HP, xpos, ypos);
         this.name = name;
         this.bagSize = 5;
     }

@@ -1,9 +1,11 @@
 public abstract class Mob {
     protected int ATK, DEF, HP, xpos, ypos;
-    public Mob(int ATK, int DEF, int HP){
+    public Mob(int ATK, int DEF, int HP, int xpos, int ypos){
         this.ATK = ATK;
         this.DEF = DEF;
         this.HP = HP;
+        this.xpos = xpos;
+        this.ypos = ypos;
     }
     public void takeDamage(int dmg){
         HP -= dmg;
@@ -19,6 +21,6 @@ public abstract class Mob {
         return this.xpos;
     }
     public int getYPos(){
-        return this.xpos;
+        return this.ypos;
     }
 }

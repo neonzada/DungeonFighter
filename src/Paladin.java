@@ -1,7 +1,7 @@
 public class Paladin extends Hero {
     private int totalHP;
-    public Paladin(int ATK, int DEF, int HP, String name){
-        super(ATK, DEF, HP, name);
+    public Paladin(int ATK, int DEF, int HP, int xpos, int ypos, String name){
+        super(ATK, DEF, HP, xpos, ypos, name);
         this.totalHP = HP;
     }
     // Special attacks (can only be used once per fight)

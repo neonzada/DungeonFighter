@@ -19,12 +19,13 @@ public class UI implements ActionListener{
     private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame;
     private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel;
     private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, forfeitButton;
-    private JButton[][] tiles;
+    private static JButton[][] tiles;
     private JLabel barbLabel, palLabel, warLabel;
     private JTextField nameBox;
     private JButton[] statInc, statDec;
     private JLabel[] statLabels;
-    private ImageIcon barbIcon, palIcon, warIcon, botTileIcon, topTileIcon;
+    private static ImageIcon barbIcon, palIcon, warIcon, botTileIcon, topTileIcon;
+    private static ImageIcon slimeIcon, goblinIcon, skellyIcon, orcIcon, kingIcon, deathIcon;
     private windowState currentWindow;
     private int[] statArray; //0: ATK, 1: DEF, 2: HP
 
@@ -214,18 +215,14 @@ public class UI implements ActionListener{
                 break;
 
             case INGAME:
-                // start the engine, maybe multithread implementation
-                // i think we should start on the main function...
-                gameEngine = new Engine(chosenClass, statArray, debugMode, retryGame);
-                gameEngine.run();
-                statFrame.setVisible(false);
-                statFrame.dispose();
+            statFrame.setVisible(false);
+            statFrame.dispose();
+            
+            // Creating ingame frame
+            ingameFrame = new JFrame("Dungeon Fighter - Ingame");
 
-                // Creating ingame frame
-                ingameFrame = new JFrame("Dungeon Fighter - Ingame");
-
-                // Creating ingame panel
-                ingamePanel = new JPanel();
+            // Creating ingame panel
+            ingamePanel = new JPanel();
                 ingamePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
                 ingamePanel.setLayout(new GridLayout(0, 10));
 
@@ -245,12 +242,12 @@ public class UI implements ActionListener{
                         ingamePanel.add(tiles[i][j]);
                     }
                 }
-
+                
                 // stat labels momento
                 for(int i = 0; i < 3; i++){
                     ingamePanel.add(statLabels[i]);
                 }
-
+                
                 // dica numero 1, e um pais da europa
                 tipButton = new JButton("Dica");
                 tipButton.addActionListener(new ActionListener() {
@@ -259,17 +256,26 @@ public class UI implements ActionListener{
                         // show tips, call engine function maybe
                     }
                 });
+                ingamePanel.add(tipButton);
 
                 // what a coward
                 forfeitButton = new JButton("Sair");
                 forfeitButton.addActionListener(this);
-
+                ingamePanel.add(forfeitButton);
+                
                 ingameFrame.add(ingamePanel, BorderLayout.CENTER);
                 ingameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 ingameFrame.setResizable(false);
                 ingameFrame.pack();
                 ingameFrame.setVisible(true);
                 ingameFrame.setLocationRelativeTo(null);
+                
+                // start the engine, maybe multithread implementation
+                // i think we should start on the main function...
+                instantiateIcons();
+                gameEngine = new Engine(chosenClass, statArray, debugMode, retryGame);
+                gameEngine.run();
+
                 break;
             
             case POSTGAME:
@@ -299,15 +305,12 @@ public class UI implements ActionListener{
             setCurrentWindow(windowState.STAT_MENU);
             createWindow(currentWindow);
         }else if(e.getSource().equals(readyButton)){
-            debugMode = false;
             retryGame = false;
             setCurrentWindow(windowState.INGAME);
             createWindow(currentWindow);
         }else if(e.getSource().equals(debugButton)){
-            debugMode = true;
-            retryGame = false;
-            setCurrentWindow(windowState.INGAME);
-            createWindow(currentWindow);
+            debugMode = !debugMode;
+            System.out.println("Debug mode: " + debugMode);
         }else if(e.getSource().equals(forfeitButton)){
             setCurrentWindow(windowState.POSTGAME);
             createWindow(currentWindow);
@@ -351,6 +354,51 @@ public class UI implements ActionListener{
         updateStatLabels(statArray);
     }
 
+    // idk how i should instantiate only on the drawSprite function call
+    public void instantiateIcons(){
+        slimeIcon = new ImageIcon("img/slime.png");
+        goblinIcon = new ImageIcon("img/goblin.png");
+        skellyIcon = new ImageIcon("img/skelly.png");
+        orcIcon = new ImageIcon("img/orc.png");
+        kingIcon = new ImageIcon("img/skellyking.png");
+    }
+
+    // generic function for painting sprites on JButtons
+    public static void drawSprite(Mob e){
+        if(e instanceof Monster){
+            switch(((Monster)e).getType()){
+                case 0:
+                    tiles[e.getYPos()][e.getXPos()].setIcon(slimeIcon);
+                    break;
+                case 1:
+                    tiles[e.getYPos()][e.getXPos()].setIcon(goblinIcon);
+                    break;
+                case 2:
+                    tiles[e.getYPos()][e.getXPos()].setIcon(skellyIcon);
+                    break;
+                case 3:
+                    tiles[e.getYPos()][e.getXPos()].setIcon(orcIcon);
+                    break;
+                case 4:
+                    tiles[e.getYPos()][e.getXPos()].setIcon(kingIcon);
+                    break;
+                default:
+                    tiles[e.getYPos()][e.getXPos()].setIcon(deathIcon);
+                    break;
+            }
+            System.out.println(((Monster)e).getType());
+        }
+        if(e instanceof Barbarian){
+            tiles[e.getYPos()][e.getXPos()].setIcon(barbIcon);
+        }
+        if(e instanceof Warrior){
+            tiles[e.getYPos()][e.getXPos()].setIcon(warIcon);
+        }
+        if(e instanceof Paladin){
+            tiles[e.getYPos()][e.getXPos()].setIcon(palIcon);
+        }
+    }
+
     public void decrementaAtributo(ActionEvent e){
         // no negative attributes!
         if((e.getSource().equals(statDec[0])) && (statArray[0] > 0)){
@@ -364,7 +412,7 @@ public class UI implements ActionListener{
         }
         //update jlabels
         updateStatLabels(statArray);
-        }
+    }
 
     // Get and set current window
     public void setCurrentWindow(windowState window){
