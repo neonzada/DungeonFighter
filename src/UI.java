@@ -18,9 +18,9 @@ public class UI implements ActionListener{
     private String chosenClass;
     private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame;
     private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel;
-    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, forfeitButton;
+    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, elixirButton, moveButton, forfeitButton;
     private static JButton[][] tiles;
-    private JLabel barbLabel, palLabel, warLabel;
+    private JLabel barbLabel, palLabel, warLabel, elixirLabel;
     private JTextField nameBox;
     private JButton[] statInc, statDec;
     private JLabel[] statLabels;
@@ -77,6 +77,7 @@ public class UI implements ActionListener{
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.pack();
                 frame.setVisible(true);
+                frame.setResizable(false);
                 frame.setLocationRelativeTo(null); // Centers the frame
                 break;
             case CHAR_SELECTION:
@@ -154,6 +155,7 @@ public class UI implements ActionListener{
                 charFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 charFrame.pack();
                 charFrame.setVisible(true);
+                charFrame.setResizable(false);
                 charFrame.setLocationRelativeTo(null);
                 break;
             
@@ -215,14 +217,14 @@ public class UI implements ActionListener{
                 break;
 
             case INGAME:
-            statFrame.setVisible(false);
-            statFrame.dispose();
-            
-            // Creating ingame frame
-            ingameFrame = new JFrame("Dungeon Fighter - Ingame");
+                statFrame.setVisible(false);
+                statFrame.dispose();
 
-            // Creating ingame panel
-            ingamePanel = new JPanel();
+                // Creating ingame frame
+                ingameFrame = new JFrame("Dungeon Fighter - Ingame");
+
+                // Creating ingame panel
+                ingamePanel = new JPanel();
                 ingamePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
                 ingamePanel.setLayout(new GridLayout(0, 10));
 
@@ -235,6 +237,7 @@ public class UI implements ActionListener{
                         if(i < 4){
                             tiles[i][j] = new JButton(topTileIcon);
                             tiles[i][j].setBorder(BorderFactory.createEmptyBorder());
+                            //tiles[i][j].addActionListener(new ButtonClickListener(i, j));
                         }else{
                             tiles[i][j] = new JButton(botTileIcon);
                             tiles[i][j].setBorder(BorderFactory.createEmptyBorder());
@@ -248,8 +251,11 @@ public class UI implements ActionListener{
                     ingamePanel.add(statLabels[i]);
                 }
                 
+                elixirLabel = new JLabel("ELX: 3");
+                ingamePanel.add(elixirLabel);
+
                 // dica numero 1, e um pais da europa
-                tipButton = new JButton("Dica");
+                tipButton = new JButton("hnt");
                 tipButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e){
@@ -258,8 +264,34 @@ public class UI implements ActionListener{
                 });
                 ingamePanel.add(tipButton);
 
+                elixirButton = new JButton("elx");
+                elixirButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e){
+                        // recuperar vida hero.setHP();
+                        // diminuir elixir hero.setElixir();
+                    }
+                });
+                ingamePanel.add(elixirButton);
+
+                // start the engine, maybe multithread implementation
+                instantiateIcons();
+                gameEngine = new Engine(chosenClass, statArray, debugMode, retryGame);
+                gameEngine.startGame();
+
+                moveButton = new JButton("mov");
+                moveButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e){
+                        gameEngine.moveLogic();
+                        // movestate: highlights possible movements
+                        // check if a move if valid before moving
+                    }
+                });
+                ingamePanel.add(moveButton);
+
                 // what a coward
-                forfeitButton = new JButton("Sair");
+                forfeitButton = new JButton("hlt");
                 forfeitButton.addActionListener(this);
                 ingamePanel.add(forfeitButton);
                 
@@ -269,24 +301,35 @@ public class UI implements ActionListener{
                 ingameFrame.pack();
                 ingameFrame.setVisible(true);
                 ingameFrame.setLocationRelativeTo(null);
-                
-                // start the engine, maybe multithread implementation
-                // i think we should start on the main function...
-                instantiateIcons();
-                gameEngine = new Engine(chosenClass, statArray, debugMode, retryGame);
-                gameEngine.run();
 
                 break;
             
             case POSTGAME:
+                ingameFrame.setVisible(false);
+                ingameFrame.dispose();
+                
+                // Creating postgame frame
+                postgameFrame = new JFrame("Dungeon Fighter - Postgame");
+
+                // Creating postgame panel
+                postgamePanel = new JPanel();
+                postgamePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
+                postgamePanel.setLayout(new GridLayout(0, 10));
+                
                 // show if the user won or lost, as well as buttons to restart game
                 // (same mob pos(and count?)) or new game (new mob pos (and count?))
-                // engine.getFinalState() returns 1 if won, 0 if lost
-                // if(engine.getFinalState()){
-                //    // do win shit
-                //}else{
-                //    // do lose shit
-                //}
+                // gameEngine.getFinalState() returns 1 if won, 0 if lost
+                if(gameEngine.getFinalState()){
+                    // do win shit
+                }else{
+                    // do lose shit
+                }
+                postgameFrame.add(postgamePanel);
+                postgameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                postgameFrame.setResizable(false);
+                postgameFrame.pack();
+                postgameFrame.setVisible(true);
+                postgameFrame.setLocationRelativeTo(null);
                 break;
             
             default:
@@ -305,9 +348,13 @@ public class UI implements ActionListener{
             setCurrentWindow(windowState.STAT_MENU);
             createWindow(currentWindow);
         }else if(e.getSource().equals(readyButton)){
-            retryGame = false;
-            setCurrentWindow(windowState.INGAME);
-            createWindow(currentWindow);
+            if(statArray[2] > 0){
+                retryGame = false;
+                setCurrentWindow(windowState.INGAME);
+                createWindow(currentWindow);
+            }else{
+                JOptionPane.showMessageDialog(null, "Por favor, aloque pelo menos um ponto em HP");
+            }
         }else if(e.getSource().equals(debugButton)){
             debugMode = !debugMode;
             System.out.println("Debug mode: " + debugMode);
@@ -327,6 +374,54 @@ public class UI implements ActionListener{
         statLabels[0].setText("ATK: " + statArray[0]);
         statLabels[1].setText("DEF: " + statArray[1]);
         statLabels[2].setText("HP: " + statArray[2]);
+    }
+
+    public static void highlightAvailableMoves(Hero h){
+        System.out.println("X: " + h.getXPos() + "Y: " + h.getYPos());
+        if(h.getXPos() < 8){
+            tiles[h.getYPos()][h.getXPos() + 1].setIcon(null);
+            tiles[h.getYPos()][h.getXPos() + 1].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e){
+                    h.setPos(h.getXPos() + 1, h.getYPos());
+                    System.out.println("RIGHT");
+                }
+            });;
+        }
+        if(h.getXPos() > 0){
+            tiles[h.getYPos()][h.getXPos() - 1].setIcon(null);
+            tiles[h.getYPos()][h.getXPos() - 1].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e){
+                    h.setPos(h.getXPos() - 1, h.getYPos());
+                    System.out.println("LEFT");
+                }
+            });;
+        }
+        if(h.getYPos() < 4){
+            tiles[h.getYPos() + 1][h.getXPos()].setIcon(null);
+            tiles[h.getYPos() + 1][h.getXPos()].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e){
+                    h.setPos(h.getXPos(), h.getYPos() + 1);
+                    System.out.println("DOWN");
+                }
+            });;
+        }
+        if(h.getYPos() > 0){
+            tiles[h.getYPos() - 1][h.getXPos()].setIcon(null);
+            tiles[h.getYPos() - 1][h.getXPos()].addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e){
+                    h.setPos(h.getXPos(), h.getYPos() - 1);
+                    System.out.println("UP");
+                }
+            });;
+        }
+    }
+
+    private void updateElixirLabel(int elixir){
+        elixirLabel.setText("ELX: " + elixir);
     }
 
     // Metodos para incrementar e decrementar atributos
@@ -349,6 +444,7 @@ public class UI implements ActionListener{
             }
         }else{
             //TODO: mostra que nao tem ponto sobrando
+            JOptionPane.showMessageDialog(null, "Maximo de 20 pontos alocados!");
         }
         //update jlabels
         updateStatLabels(statArray);
@@ -401,14 +497,22 @@ public class UI implements ActionListener{
 
     public void decrementaAtributo(ActionEvent e){
         // no negative attributes!
-        if((e.getSource().equals(statDec[0])) && (statArray[0] > 0)){
-            statArray[0]--;
+        int res = 0;
+        for(int i = 0; i < 3; i++){
+            res += statArray[i];
         }
-        if((e.getSource().equals(statDec[1])) && (statArray[1] > 0)){
-            statArray[1]--;
-        }
-        if((e.getSource().equals(statDec[2])) && (statArray[2] > 0)){
-            statArray[2]--;
+        if(res > 0){
+            if((e.getSource().equals(statDec[0])) && (statArray[0] > 0)){
+                statArray[0]--;
+            }
+            if((e.getSource().equals(statDec[1])) && (statArray[1] > 0)){
+                statArray[1]--;
+            }
+            if((e.getSource().equals(statDec[2])) && (statArray[2] > 0)){
+                statArray[2]--;
+            }
+        }else{
+            JOptionPane.showMessageDialog(null, "Sem atributos negativos!");
         }
         //update jlabels
         updateStatLabels(statArray);

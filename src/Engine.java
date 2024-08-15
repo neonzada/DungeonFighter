@@ -1,6 +1,6 @@
 import java.util.Random;
 
-public class Engine extends Thread{
+public class Engine{
     // Constant mob attributes, fine-tune these for balancing
     private final int base_monATK = 4;
     private final int base_monDEF = 3;
@@ -22,42 +22,49 @@ public class Engine extends Thread{
     private String chosenClass;
     private int mobNumber, trapNumber;
     private int[] statArray;
-    private int[] mobIndex, mobXPos, mobYPos, trapXPos, trapYPos; //only used for the sprites lol
+    private int[] mobXPos, mobYPos, trapXPos, trapYPos; //only used for the sprites lol
+    private int[] usedXPos, usedYPos;
 
     private boolean debugMode;
     private boolean retryGame;
+    private boolean finalState;
 
     public Engine(String chosenClass, int[] statArray, boolean debugMode, boolean retryGame){
+        switch(chosenClass){
+            case "Paladin":
+                hero = new Paladin(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
+                break;
+            case "Warrior":
+                hero = new Warrior(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
+                break;
+            default:
+                hero = new Barbarian(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
+                break;
+        }
         this.chosenClass = chosenClass;
         this.mobNumber = 5;
         this.trapNumber = 3;
         this.statArray = statArray;
-        this.mobIndex = new int[]{
-            0, //SLIME
-            1, //GOBLIN
-            2, //SKELLY
-            3, //ORC
-            4, //SKELLYKING
-            5 //DEATH
-        };
         this.debugMode = debugMode;
         this.retryGame = retryGame;
     }
     
-    //TODO: implement multithreading when the game begins
-    @Override
-    public void run(){
+    public void startGame(){
         if(!retryGame) getSeed(mobNumber);
         spawnPlayer();
         spawnMobs(mobNumber);
         spawnTraps(trapNumber);
         spawnBoss();
-        //game loop here
+        /*
+        while(hero.getHP() > 0){
+
+        }
+        */
     }
 
     // because the game needs to repeat every attribute and monster position,
     // let's store those values to reuse them in case of a "retry" signal
-    public synchronized void getSeed(int mobNumber){
+    public void getSeed(int mobNumber){
         Random rand = new Random();
         monATK = rand.nextInt(5);
         monDEF = rand.nextInt(5);
@@ -70,6 +77,9 @@ public class Engine extends Thread{
         mobXPos = new int[mobNumber];
         mobYPos = new int[mobNumber];
 
+        usedXPos = new int[mobNumber]; //new int[mobNumber + trapNumber + elixirNumber] para armazenar as posicoes usadas pelos monstros, traps e elixir
+        usedYPos = new int[mobNumber]; //dai na proxima checagem (trap) so adicionar mobNumber + i em cada iteracao
+
         trapXPos = new int[trapNumber];
         trapYPos = new int[trapNumber];
 
@@ -78,32 +88,50 @@ public class Engine extends Thread{
         // xpos array and ypos array to make sure there isn't any same coordinates
         // there's probably a better way to do this, research more
         for(int i = 0; i < mobNumber; i++){
-            mobXPos[i] = 1 + rand.nextInt(9);
+            // roll the dice
+            mobXPos[i] = 1 + rand.nextInt(8);
             mobYPos[i] = rand.nextInt(4);
             System.out.println("mobXPos[" + i + "]: " + mobXPos[i]);
             System.out.println("mobYPos[" + i + "]: " + mobYPos[i]);
+            // check if values exist, if it exists then reroll (redo the loop)
+            if(check(usedXPos, mobXPos[i]) && check(usedYPos, mobYPos[i])){
+                i--;
+            }else{
+                // store existing values on an auxiliary array
+                usedXPos[i] = mobXPos[i];
+                usedYPos[i] = mobYPos[i];
+            }
         }
         for(int i = 0; i < trapNumber; i++){
-            trapXPos[i] = 1 + rand.nextInt(9);
+            trapXPos[i] = 1 + rand.nextInt(8);
             trapYPos[i] = rand.nextInt(4);
             System.out.println("trapXPos[" + i + "]: " + trapXPos[i]);
             System.out.println("trapYPos[" + i + "]: " + trapYPos[i]);
         }
     }
 
-    public void spawnPlayer(){
-        switch(chosenClass){
-            case "Paladin":
-                hero = new Paladin(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
+    // Check if the specified value is on the array
+    private boolean check(int[] arr, int value)
+    {
+        boolean isThere = false;
+        for (int element : arr) {
+            if (element == value) {
+                isThere = true;
                 break;
-            case "Warrior":
-                hero = new Warrior(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
-                break;
-            default:
-                hero = new Barbarian(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
-                break;
+            }
         }
+        if(isThere) System.out.println("rerolling");
+        return isThere;
+    }
+
+    public void spawnPlayer(){
         UI.drawSprite(hero);
+    }
+
+    public void moveLogic(){
+        System.out.println(hero.getXPos() + "" + hero.getYPos());
+        UI.highlightAvailableMoves(hero);
+
     }
 
     public void spawnMobs(int mobNum){
@@ -143,5 +171,9 @@ public class Engine extends Thread{
             Random rand = new Random();
             trapArr[i] = new Trap(trapXPos[i], trapYPos[i], rand.nextBoolean());
         }
+    }
+
+    public boolean getFinalState(){
+        return this.finalState;
     }
 }
