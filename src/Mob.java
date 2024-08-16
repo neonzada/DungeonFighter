@@ -11,7 +11,6 @@ public abstract class Mob {
         HP -= dmg;
     }
     public void setPos(int xpos, int ypos){
-        // TODO: Move function
         this.xpos = xpos;
         this.ypos = ypos;
     }

@@ -43,8 +43,4 @@ public class Hero extends Mob{
     public void setName(String name){
         this.name = name;
     }
-    public void setPos(int x, int y){
-        this.xpos = x;
-        this.ypos = y;
-    }
 }

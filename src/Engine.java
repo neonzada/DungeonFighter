@@ -10,7 +10,7 @@ public class Engine{
     private final int base_bossDEF = 10;
     private final int base_bossHP = 10;
 
-    private Monster[] monArr;
+    private static Monster[] monArr;
     private Boss bossy;
     private Trap[] trapArr;
     
@@ -19,10 +19,8 @@ public class Engine{
     //random positions and attr buffs
     private int monATK, monDEF, monHP, bossATK, bossDEF, bossHP;
 
-    private String chosenClass;
-    private int mobNumber, trapNumber;
-    private int[] statArray;
-    private int[] mobXPos, mobYPos, trapXPos, trapYPos; //only used for the sprites lol
+    private static int mobNumber, trapNumber;
+    private static int[] mobXPos, mobYPos, trapXPos, trapYPos; //only used for the sprites lol
     private int[] usedXPos, usedYPos;
 
     private boolean debugMode;
@@ -41,10 +39,8 @@ public class Engine{
                 hero = new Barbarian(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
                 break;
         }
-        this.chosenClass = chosenClass;
         this.mobNumber = 5;
         this.trapNumber = 3;
-        this.statArray = statArray;
         this.debugMode = debugMode;
         this.retryGame = retryGame;
     }
@@ -111,7 +107,7 @@ public class Engine{
     }
 
     // Check if the specified value is on the array
-    private boolean check(int[] arr, int value)
+    private static boolean check(int[] arr, int value)
     {
         boolean isThere = false;
         for (int element : arr) {
@@ -126,12 +122,6 @@ public class Engine{
 
     public void spawnPlayer(){
         UI.drawSprite(hero);
-    }
-
-    public void moveLogic(){
-        System.out.println(hero.getXPos() + "" + hero.getYPos());
-        UI.highlightAvailableMoves(hero);
-
     }
 
     public void spawnMobs(int mobNum){
@@ -175,5 +165,25 @@ public class Engine{
 
     public boolean getFinalState(){
         return this.finalState;
+    }
+
+    public Hero getHero(){
+        return this.hero;
+    }
+
+    public static boolean checkMonster(int x, int y){
+        boolean found = false;
+        for(int i = 0; i < mobNumber; i++){
+            if(mobXPos[i] == x && mobYPos[i] == y) found = true;
+        }
+        return found;
+    }
+
+    public static Monster getMonster(int x, int y){
+        int i;
+        for(i = 0; i < mobNumber; i++){
+            if(mobXPos[i] == x && mobYPos[i] == y) break;
+        }
+        return monArr[i];
     }
 }

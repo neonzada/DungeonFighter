@@ -18,7 +18,8 @@ public class UI implements ActionListener{
     private String chosenClass;
     private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame;
     private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel;
-    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, elixirButton, moveButton, forfeitButton;
+    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, elixirButton, forfeitButton;
+    private static JButton moveButton;
     private static JButton[][] tiles;
     private JLabel barbLabel, palLabel, warLabel, elixirLabel;
     private JTextField nameBox;
@@ -283,7 +284,8 @@ public class UI implements ActionListener{
                 moveButton.addActionListener(new ActionListener() {
                     @Override
                     public void actionPerformed(ActionEvent e){
-                        gameEngine.moveLogic();
+                        highlightAvailableMoves(gameEngine.getHero());
+                        moveButton.setEnabled(false);
                         // movestate: highlights possible movements
                         // check if a move if valid before moving
                     }
@@ -376,15 +378,37 @@ public class UI implements ActionListener{
         statLabels[2].setText("HP: " + statArray[2]);
     }
 
-    public static void highlightAvailableMoves(Hero h){
+    public static void removeAllListeners(){
+        for(int i = 0; i < 5; i++){
+            for(int j = 0; j < 10; j++){
+                for (ActionListener al : tiles[i][j].getActionListeners()) {
+                    tiles[i][j].removeActionListener(al);
+                }
+            }
+        }
+    }
+
+    // bad code incoming
+    public void highlightAvailableMoves(Hero h){
+        removeAllListeners();
         System.out.println("X: " + h.getXPos() + "Y: " + h.getYPos());
-        if(h.getXPos() < 8){
+        if(h.getXPos() < 9){
+            // TODO: maybe get some nice icons to highlight and to indicate path already traveled (minecraft torch)
+            // basically just replace null with new highlight icon, and then if actionPerformed replace others
             tiles[h.getYPos()][h.getXPos() + 1].setIcon(null);
             tiles[h.getYPos()][h.getXPos() + 1].addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e){
+                    // defaultIcon indicates path already discovered
+                    tiles[h.getYPos()][h.getXPos()].setIcon(null);
                     h.setPos(h.getXPos() + 1, h.getYPos());
+                    drawSprite(h);
+                    removeAllListeners();
                     System.out.println("RIGHT");
+                    moveButton.setEnabled(true);
+                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
+                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                    }
                 }
             });;
         }
@@ -393,8 +417,16 @@ public class UI implements ActionListener{
             tiles[h.getYPos()][h.getXPos() - 1].addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e){
+                    // TODO: minecraft torch for the path already cleared
+                    tiles[h.getYPos()][h.getXPos()].setIcon(null);
                     h.setPos(h.getXPos() - 1, h.getYPos());
+                    drawSprite(h);
+                    removeAllListeners();
                     System.out.println("LEFT");
+                    moveButton.setEnabled(true);
+                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
+                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                    }
                 }
             });;
         }
@@ -403,8 +435,15 @@ public class UI implements ActionListener{
             tiles[h.getYPos() + 1][h.getXPos()].addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e){
+                    tiles[h.getYPos()][h.getXPos()].setIcon(null);
                     h.setPos(h.getXPos(), h.getYPos() + 1);
+                    drawSprite(h);
+                    removeAllListeners();
                     System.out.println("DOWN");
+                    moveButton.setEnabled(true);
+                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
+                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                    }
                 }
             });;
         }
@@ -413,19 +452,105 @@ public class UI implements ActionListener{
             tiles[h.getYPos() - 1][h.getXPos()].addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e){
+                    tiles[h.getYPos()][h.getXPos()].setIcon(null);
                     h.setPos(h.getXPos(), h.getYPos() - 1);
+                    drawSprite(h);
+                    removeAllListeners();
                     System.out.println("UP");
+                    moveButton.setEnabled(true);
+                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
+                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                    }
                 }
             });;
         }
     }
 
+    private void startBattle(Hero h, Monster m){
+        ingameFrame.setVisible(false);
+
+        JFrame battleFrame = new JFrame();
+        JPanel battlePanel = new JPanel();
+        battlePanel.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
+        battlePanel.setLayout(new GridLayout(0, 3));
+
+        // this shit makes the world go around
+        // when we atk/ex we test if after the hit the monsterHP < 1 or playerHP < 1 and
+        // act accordingly
+        JButton atkButton = new JButton("atk");
+        JButton specialButton = new JButton("ex");
+        JButton heroButton = new JButton();
+        JButton monButton = new JButton();
+
+        JLabel vsLabel = new JLabel("VS", SwingConstants.CENTER);
+        //TODO: add previous elixir button
+
+        // idk if i should modulate this
+        switch(m.getType()){
+            case 0:
+                monButton.setIcon(slimeIcon);
+                break;
+            case 1:
+                monButton.setIcon(goblinIcon);
+                break;
+            case 2:
+                monButton.setIcon(skellyIcon);
+                break;
+            case 3:
+                monButton.setIcon(orcIcon);
+                break;
+            case 4:
+                monButton.setIcon(kingIcon);
+                break;
+            default:
+                monButton.setIcon(deathIcon);
+                break;
+        }
+        if(h instanceof Barbarian){
+            heroButton.setIcon(barbIcon);
+        }
+        if(h instanceof Warrior){
+            heroButton.setIcon(warIcon);
+        }
+        if(h instanceof Paladin){
+            heroButton.setIcon(palIcon);
+        }
+
+        makeOpaque(monButton);
+        makeOpaque(heroButton);
+        battlePanel.add(heroButton);
+        battlePanel.add(vsLabel);
+        battlePanel.add(monButton);
+
+        battlePanel.add(atkButton);
+        battlePanel.add(specialButton);
+        battlePanel.add(elixirButton);
+
+        battlePanel.add(statLabels[0]);
+        battlePanel.add(statLabels[1]);
+        battlePanel.add(statLabels[2]);
+
+
+        battleFrame.add(battlePanel, BorderLayout.CENTER);
+        battleFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        battleFrame.setResizable(false);
+        battleFrame.pack();
+        battleFrame.setVisible(true);
+        battleFrame.setLocationRelativeTo(null);
+    }
+
+    private void makeOpaque(JButton button){
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+        button.setBorder(null);
+    }
     private void updateElixirLabel(int elixir){
         elixirLabel.setText("ELX: " + elixir);
     }
 
     // Metodos para incrementar e decrementar atributos
-    // wtf que merda, quero fazer de outro jeito! but hey, it werks
     public void incrementaAtributo(ActionEvent e){
         int res = 0;
         for(int i = 0; i < 3; i++){
@@ -443,14 +568,11 @@ public class UI implements ActionListener{
                 statArray[2]++;
             }
         }else{
-            //TODO: mostra que nao tem ponto sobrando
             JOptionPane.showMessageDialog(null, "Maximo de 20 pontos alocados!");
         }
-        //update jlabels
         updateStatLabels(statArray);
     }
 
-    // idk how i should instantiate only on the drawSprite function call
     public void instantiateIcons(){
         slimeIcon = new ImageIcon("img/slime.png");
         goblinIcon = new ImageIcon("img/goblin.png");
@@ -460,6 +582,7 @@ public class UI implements ActionListener{
     }
 
     // generic function for painting sprites on JButtons
+    // wanted to make one even more generic but meh
     public static void drawSprite(Mob e){
         if(e instanceof Monster){
             switch(((Monster)e).getType()){
