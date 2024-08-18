@@ -1,16 +1,35 @@
-public class Hero extends Mob{
-    protected int bagSize, xpos, ypos;
+import java.util.ArrayList;
+
+public abstract class Hero extends Mob{
+    protected int xpos, ypos;
+    protected ArrayList<Elixir> storedElixir;
     protected String name;
     public Hero(int ATK, int DEF, int HP, int xpos, int ypos, String name){
         super(ATK, DEF, HP, xpos, ypos);
         this.name = name;
-        this.bagSize = 5;
+        storedElixir = new ArrayList<Elixir>();
     }
+
+    public abstract void specialAttack(Mob p1, Mob p2);
 
     public void displayInfo(){
         System.out.println("name: " + name + ", HP: " + HP + ", ATK: " + ATK + ", DEF: " + DEF);
     }
 
+    public int getStoredElixir(){
+        return storedElixir.size();
+    }
+
+    public void storeElixir(Elixir e){
+        storedElixir.add(e);
+    }
+
+    public void consumeElixir(){
+        if(!storedElixir.isEmpty()){
+            incHP(3);
+            storedElixir.removeLast();
+        }
+    }
     // Getters
     public int getATK(){
         return this.ATK;
@@ -34,6 +53,9 @@ public class Hero extends Mob{
     }
     public void incHP(){
         this.HP++;
+    }
+    public void incHP(int a){
+        this.HP += a;
     }
 
     // decrement

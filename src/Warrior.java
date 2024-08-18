@@ -3,10 +3,10 @@ public class Warrior extends Hero {
         super(ATK, DEF, HP, xpos, ypos, name);
     }
     // Special attacks (can only be used once per fight)
-    public void defensivePosture(){
-        this.HP *= 1.5;
-    }
-    public void endPosture(){
-        this.HP /= 1.5;
+    public void specialAttack(Mob p1, Mob p2){
+        int defBefore = this.DEF;
+        this.DEF *= 1.5;
+        super.attack(p1, p2);
+        this.DEF = defBefore;
     }
 }

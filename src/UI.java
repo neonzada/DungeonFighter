@@ -292,7 +292,7 @@ public class UI implements ActionListener{
                     ingamePanel.add(statLabels[i]);
                 }
                 
-                elixirLabel = new JLabel("ELX: 3");
+                elixirLabel = new JLabel("ELX: 0");
                 ingamePanel.add(elixirLabel);
 
                 ingameFrame.add(ingamePanel, BorderLayout.CENTER);
@@ -386,13 +386,42 @@ public class UI implements ActionListener{
         }
     }
 
+    public void checkForMobs(Hero h){
+        int x = h.getXPos();
+        int y = h.getYPos();
+        if(Engine.checkMonster(x, y)){
+            if(Engine.getMonster(x, y).getHP() > 0) startBattle(h, Engine.getMonster(x, y));
+        }else if(Engine.checkTrap(x, y)){
+            if(Engine.getTrap(x, y).getActive()){
+                Trap t = Engine.getTrap(x, y);
+                int dmg = t.dealDamage(h);
+                updateStatLabels(h, statLabels);
+                t.deactivateTrap();
+                if(t.getType()){
+                    JOptionPane.showMessageDialog(null, "Voce pisou em uma armadilha e tomou 1 de dano.");
+                }else{
+                    JOptionPane.showMessageDialog(null, "Voce pisou no fogo e tomou " + dmg + " de dano.");
+                }
+                if(h.getHP() < 1){
+                    ingameFrame.setVisible(false);
+                    setCurrentWindow(windowState.POSTGAME);
+                    createWindow(currentWindow);
+                }
+            }
+        }else if(Engine.checkElixir(x, y)){
+            if(Engine.getElixir(x, y).getActive()){
+                JOptionPane.showMessageDialog(null, "Voce pegou um elixir e adicionou a sua bolsa.");
+                h.storeElixir(Engine.getElixir(x, y));
+                updateElixirLabel(h.getStoredElixir());
+                Engine.getElixir(x, y).deactivateElixir();
+            }
+        }
+    }
     // bad code incoming
     public void highlightAvailableMoves(Hero h){
         removeAllListeners();
         System.out.println("X: " + h.getXPos() + "Y: " + h.getYPos());
         if(h.getXPos() < 9){
-            // TODO: maybe get some nice icons to highlight and to indicate path already traveled (minecraft torch)
-            // basically just replace null with new highlight icon, and then if actionPerformed replace others
             tiles[h.getYPos()][h.getXPos() + 1].setIcon(null);
             tiles[h.getYPos()][h.getXPos() + 1].addActionListener(new ActionListener() {
                 @Override
@@ -404,11 +433,8 @@ public class UI implements ActionListener{
                     removeAllListeners();
                     System.out.println("RIGHT");
                     moveButton.setEnabled(true);
-
                     // now this is some baaad code
-                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
-                    }
+                    checkForMobs(h);
                 }
             });;
         }
@@ -417,16 +443,13 @@ public class UI implements ActionListener{
             tiles[h.getYPos()][h.getXPos() - 1].addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e){
-                    // TODO: minecraft torch for the path already cleared
                     tiles[h.getYPos()][h.getXPos()].setIcon(null);
                     h.setPos(h.getXPos() - 1, h.getYPos());
                     drawSprite(h);
                     removeAllListeners();
                     System.out.println("LEFT");
                     moveButton.setEnabled(true);
-                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
-                    }
+                    checkForMobs(h);
                 }
             });;
         }
@@ -441,9 +464,7 @@ public class UI implements ActionListener{
                     removeAllListeners();
                     System.out.println("DOWN");
                     moveButton.setEnabled(true);
-                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
-                    }
+                    checkForMobs(h);
                 }
             });;
         }
@@ -458,9 +479,7 @@ public class UI implements ActionListener{
                     removeAllListeners();
                     System.out.println("UP");
                     moveButton.setEnabled(true);
-                    if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
-                    }
+                    checkForMobs(h);
                 }
             });;
         }
@@ -469,14 +488,11 @@ public class UI implements ActionListener{
     private void startBattle(Hero h, Monster m){
         ingameFrame.setVisible(false);
 
-        JFrame battleFrame = new JFrame();
+        JFrame battleFrame = new JFrame("Dungeon Fighter - Battle");
         JPanel battlePanel = new JPanel();
-        battlePanel.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
-        battlePanel.setLayout(new GridLayout(0, 3));
+        battlePanel.setBorder(BorderFactory.createEmptyBorder(200, 10, 10, 10));
+        battlePanel.setLayout(new GridLayout(0, 5));
 
-        // this shit makes the world go around
-        // when we atk/ex we test if after the hit the monsterHP < 1 or playerHP < 1 and
-        // act accordingly
         JButton atkButton = new JButton("atk");
         JButton specialButton = new JButton("ex");
         JButton heroButton = new JButton();
@@ -517,18 +533,33 @@ public class UI implements ActionListener{
 
         makeOpaque(monButton);
         makeOpaque(heroButton);
+        JLabel nameLabel = new JLabel(h.getName(), SwingConstants.LEFT);
+        battlePanel.add(nameLabel);
         battlePanel.add(heroButton);
         battlePanel.add(vsLabel);
         battlePanel.add(monButton);
+        JLabel monName = new JLabel(m.getClass().getSimpleName(), SwingConstants.RIGHT);
+        battlePanel.add(monName);
 
         JButton elixirButton = new JButton("elx");
+        JButton escapeButton = new JButton("esc");
         battlePanel.add(atkButton);
         battlePanel.add(specialButton);
         battlePanel.add(elixirButton);
+        battlePanel.add(escapeButton);
 
-        for(int i =0; i < 3; i++){
+        JLabel chanceLabel = new JLabel("(25%)");
+        battlePanel.add(chanceLabel);
+        JLabel seuLabel = new JLabel("YOU:");
+        battlePanel.add(seuLabel);
+
+        for(int i = 0; i < 3; i++){
             battlePanel.add(statLabels[i]);
         }
+
+        battlePanel.add(elixirLabel);
+        JLabel theirLabel = new JLabel("THEY:");
+        battlePanel.add(theirLabel);
 
         JLabel monStatLabels[] = new JLabel[3];
         for(int i = 0; i < 3; i++){
@@ -553,12 +584,50 @@ public class UI implements ActionListener{
                     //close screen
                     battleFrame.setVisible(false);
                     //why do i need to add labels again
-                    for(int i =0; i < 3; i++){
+                    for(int i = 0; i < 3; i++){
                         ingamePanel.add(statLabels[i]);
                     }
                     ingamePanel.add(elixirLabel);
                     ingameFrame.setVisible(true);
                 }
+            }
+        });
+
+        specialButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                if(h instanceof Barbarian) JOptionPane.showMessageDialog(null, "Seu ataque aumentou em 50%!");
+                if(h instanceof Paladin) JOptionPane.showMessageDialog(null, "Voce recuperou 50% da sua vida total!");
+                if(h instanceof Warrior) JOptionPane.showMessageDialog(null, "Sua defesa aumentou em 50%!");
+                h.specialAttack(h, m);
+                updateStatLabels(m, monStatLabels);
+                updateStatLabels(h, statLabels);
+                specialButton.setEnabled(false);
+                if(h.getHP() < 1){
+                    //gameover
+                    battleFrame.setVisible(false);
+                    setCurrentWindow(windowState.POSTGAME);
+                    createWindow(currentWindow);
+                }
+                if(m.getHP() < 1){
+                    //close screen
+                    battleFrame.setVisible(false);
+                    //why do i need to add labels again
+                    for(int i = 0; i < 3; i++){
+                        ingamePanel.add(statLabels[i]);
+                    }
+                    ingamePanel.add(elixirLabel);
+                    ingameFrame.setVisible(true);
+                }
+            }
+        });
+
+        elixirButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                h.consumeElixir();
+                updateElixirLabel(h.getStoredElixir());
+                updateStatLabels(h, statLabels);
             }
         });
 
@@ -585,7 +654,7 @@ public class UI implements ActionListener{
         if(totalDmg > totalDef){
             JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi maior que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Voce causou " + (totalDmg - totalDef) + " de dano.");
         }else if(totalDmg == totalDef){
-            JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi igual que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Nada acontece, feijoada.");
+            JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi igual que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Nada acontece.");
         }else{
             JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi menor que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Voce tomou " + (totalDef - totalDmg) + " de dano.");
         }
@@ -593,7 +662,6 @@ public class UI implements ActionListener{
     // Metodos para incrementar e decrementar atributos
     public void incrementaAtributo(ActionEvent e){
         int res = hero.getATK() + hero.getDEF() + hero.getHP();
-        //TODO: definir o numero maximo de atributos em algum lugar do codigo
         if(res < 20){
             if(e.getSource().equals(statInc[0])){
                 hero.incATK();
