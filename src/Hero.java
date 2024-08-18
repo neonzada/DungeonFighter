@@ -7,11 +7,6 @@ public class Hero extends Mob{
         this.bagSize = 5;
     }
 
-    // Basic actions
-    public void attack(){
-        // attack the enemy
-    }
-
     public void displayInfo(){
         System.out.println("name: " + name + ", HP: " + HP + ", ATK: " + ATK + ", DEF: " + DEF);
     }
@@ -30,6 +25,27 @@ public class Hero extends Mob{
         return this.name;
     }
 
+    // increment
+    public void incATK(){
+        this.ATK++;
+    }
+    public void incDEF(){
+        this.DEF++;
+    }
+    public void incHP(){
+        this.HP++;
+    }
+
+    // decrement
+    public void decATK(){
+        this.ATK--;
+    }
+    public void decDEF(){
+        this.DEF--;
+    }
+    public void decHP(){
+        this.HP--;
+    }
     // Setters
     public void setATK(int ATK){
         this.ATK = ATK;

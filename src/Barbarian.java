@@ -3,9 +3,9 @@ public class Barbarian extends Hero {
         super(ATK, DEF, HP, xpos, ypos, name);
     }
     // Special attacks (can only be used once per fight)
-    public void rageAttack(){
+    public void rageAttack(Mob p1, Mob p2){
         ATK *= 1.5;
-        super.attack();
+        super.attack(p1, p2);
         ATK /= 1.5;
     }
 }

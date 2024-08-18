@@ -2,45 +2,38 @@ import java.util.Random;
 
 public class Engine{
     // Constant mob attributes, fine-tune these for balancing
-    private final int base_monATK = 4;
-    private final int base_monDEF = 3;
-    private final int base_monHP = 3;
+    private final int base_monATK = 5;
+    private final int base_monDEF = 5;
+    private final int base_monHP = 4;
 
-    private final int base_bossATK = 12;
-    private final int base_bossDEF = 10;
-    private final int base_bossHP = 10;
+    private final int base_bossATK = 7;
+    private final int base_bossDEF = 7;
+    private final int base_bossHP = 6;
 
     private static Monster[] monArr;
-    private Boss bossy;
+    private static Boss bossy;
     private Trap[] trapArr;
+    private Elixir[] elxArr;
     
     private Hero hero;
 
     //random positions and attr buffs
     private int monATK, monDEF, monHP, bossATK, bossDEF, bossHP;
 
-    private static int mobNumber, trapNumber;
-    private static int[] mobXPos, mobYPos, trapXPos, trapYPos; //only used for the sprites lol
+    private static int mobNumber, trapNumber, elixirNumber;
+    private static int[] mobXPos, mobYPos, trapXPos, trapYPos, elixirXPos, elixirYPos; //only used for the sprites lol
     private int[] usedXPos, usedYPos;
 
     private boolean debugMode;
     private boolean retryGame;
     private boolean finalState;
 
-    public Engine(String chosenClass, int[] statArray, boolean debugMode, boolean retryGame){
-        switch(chosenClass){
-            case "Paladin":
-                hero = new Paladin(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
-                break;
-            case "Warrior":
-                hero = new Warrior(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
-                break;
-            default:
-                hero = new Barbarian(statArray[0], statArray[1], statArray[2], 0, 2, chosenClass);
-                break;
-        }
-        this.mobNumber = 5;
-        this.trapNumber = 3;
+    public Engine(Hero hero, boolean debugMode, boolean retryGame){
+        this.hero = hero;
+        // por algum motivo a soma desses numeros nao pode ser maior que 9, wtf
+        mobNumber = 4;
+        trapNumber = 3;
+        elixirNumber = 2;
         this.debugMode = debugMode;
         this.retryGame = retryGame;
     }
@@ -50,39 +43,34 @@ public class Engine{
         spawnPlayer();
         spawnMobs(mobNumber);
         spawnTraps(trapNumber);
+        spawnElixir(elixirNumber);
         spawnBoss();
-        /*
-        while(hero.getHP() > 0){
-
-        }
-        */
     }
 
     // because the game needs to repeat every attribute and monster position,
     // let's store those values to reuse them in case of a "retry" signal
     public void getSeed(int mobNumber){
         Random rand = new Random();
-        monATK = rand.nextInt(5);
-        monDEF = rand.nextInt(5);
-        monHP = rand.nextInt(5);
-        bossATK = rand.nextInt(8);
-        bossDEF = rand.nextInt(8);
-        bossHP = rand.nextInt(8);
+        monATK = rand.nextInt(2);
+        monDEF = rand.nextInt(2);
+        monHP = rand.nextInt(2);
+        bossATK = rand.nextInt(4);
+        bossDEF = rand.nextInt(4);
+        bossHP = rand.nextInt(4);
 
-        //maybe pos could be class attributes lol
+        //maybe pos could be class attributes lol refactor plsss
         mobXPos = new int[mobNumber];
         mobYPos = new int[mobNumber];
-
-        usedXPos = new int[mobNumber]; //new int[mobNumber + trapNumber + elixirNumber] para armazenar as posicoes usadas pelos monstros, traps e elixir
-        usedYPos = new int[mobNumber]; //dai na proxima checagem (trap) so adicionar mobNumber + i em cada iteracao
 
         trapXPos = new int[trapNumber];
         trapYPos = new int[trapNumber];
 
-        //TODO: implement monster checking collision (no 2 monsters at the same tile)
-        // i think this is going to be costly since we have to iterate through the
-        // xpos array and ypos array to make sure there isn't any same coordinates
-        // there's probably a better way to do this, research more
+        elixirXPos = new int[elixirNumber];
+        elixirYPos = new int[elixirNumber];
+
+        usedXPos = new int[mobNumber + trapNumber + elixirNumber]; //new int[mobNumber + trapNumber + elixirNumber] para armazenar as posicoes usadas pelos monstros, traps e elixir
+        usedYPos = new int[mobNumber + trapNumber + elixirNumber]; //dai na proxima checagem (trap) so adicionar mobNumber + i em cada iteracao
+
         for(int i = 0; i < mobNumber; i++){
             // roll the dice
             mobXPos[i] = 1 + rand.nextInt(8);
@@ -90,7 +78,7 @@ public class Engine{
             System.out.println("mobXPos[" + i + "]: " + mobXPos[i]);
             System.out.println("mobYPos[" + i + "]: " + mobYPos[i]);
             // check if values exist, if it exists then reroll (redo the loop)
-            if(check(usedXPos, mobXPos[i]) && check(usedYPos, mobYPos[i])){
+            if((check(usedXPos, mobXPos[i])) && (check(usedYPos, mobYPos[i]))){
                 i--;
             }else{
                 // store existing values on an auxiliary array
@@ -103,10 +91,28 @@ public class Engine{
             trapYPos[i] = rand.nextInt(4);
             System.out.println("trapXPos[" + i + "]: " + trapXPos[i]);
             System.out.println("trapYPos[" + i + "]: " + trapYPos[i]);
+            if((check(usedXPos, trapXPos[i])) && (check(usedYPos, trapYPos[i]))){
+                i--;
+            }else{
+                usedXPos[mobNumber + i] = trapXPos[i];
+                usedYPos[mobNumber + i] = trapYPos[i];
+            }
+        }
+        for(int i = 0; i < elixirNumber; i++){
+            elixirYPos[i] = rand.nextInt(4);
+            elixirXPos[i] = 1 + rand.nextInt(8);
+            System.out.println("elixirXPos[" + i + "]: " + elixirXPos[i]);
+            System.out.println("elixirYPos[" + i + "]: " + elixirYPos[i]);
+            if((check(usedXPos, elixirXPos[i])) && (check(usedYPos, elixirYPos[i]))){
+                i--;
+            }else{
+                usedXPos[mobNumber + trapNumber + i] = elixirXPos[i];
+                usedYPos[mobNumber + trapNumber + i] = elixirYPos[i];
+            }
         }
     }
 
-    // Check if the specified value is on the array
+    // check if the specified value is on the array
     private static boolean check(int[] arr, int value)
     {
         boolean isThere = false;
@@ -151,7 +157,6 @@ public class Engine{
             2,
             3 + rand.nextInt(2)
         );
-        System.out.println(bossy.getXPos());
         UI.drawSprite(bossy);
     }
 
@@ -160,6 +165,14 @@ public class Engine{
         for(int i = 0; i < trapNumber; i++){
             Random rand = new Random();
             trapArr[i] = new Trap(trapXPos[i], trapYPos[i], rand.nextBoolean());
+            if(debugMode) UI.drawSprite(trapArr[i]);
+        }
+    }
+    public void spawnElixir(int elixirNumber){
+        elxArr = new Elixir[elixirNumber];
+        for(int i = 0; i < elixirNumber; i++){
+            elxArr[i] = new Elixir(elixirXPos[i], elixirYPos[i]);
+            if(debugMode) UI.drawSprite(elxArr[i]);
         }
     }
 
@@ -173,6 +186,7 @@ public class Engine{
 
     public static boolean checkMonster(int x, int y){
         boolean found = false;
+        if(bossy.getXPos() == x && bossy.getYPos() == y) found = true;
         for(int i = 0; i < mobNumber; i++){
             if(mobXPos[i] == x && mobYPos[i] == y) found = true;
         }
@@ -181,9 +195,26 @@ public class Engine{
 
     public static Monster getMonster(int x, int y){
         int i;
+        if(bossy.getXPos() == x && bossy.getYPos() == y) return bossy;
         for(i = 0; i < mobNumber; i++){
             if(mobXPos[i] == x && mobYPos[i] == y) break;
         }
         return monArr[i];
+    }
+
+    public static boolean checkTrap(int x, int y){
+        boolean found = false;
+        for(int i = 0; i < trapNumber; i++){
+            if(trapXPos[i] == x && trapYPos[i] == y) found = true;
+        }
+        return found;
+    }
+
+    public static boolean checkElixir(int x, int y){
+        boolean found = false;
+        for(int i = 0; i < elixirNumber; i++){
+            if(elixirXPos[i] == x && elixirYPos[i] == y) found = true;
+        }
+        return found;
     }
 }

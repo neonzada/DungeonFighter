@@ -18,7 +18,7 @@ public class UI implements ActionListener{
     private String chosenClass;
     private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame;
     private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel;
-    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, elixirButton, forfeitButton;
+    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, forfeitButton;
     private static JButton moveButton;
     private static JButton[][] tiles;
     private JLabel barbLabel, palLabel, warLabel, elixirLabel;
@@ -27,17 +27,13 @@ public class UI implements ActionListener{
     private JLabel[] statLabels;
     private static ImageIcon barbIcon, palIcon, warIcon, botTileIcon, topTileIcon;
     private static ImageIcon slimeIcon, goblinIcon, skellyIcon, orcIcon, kingIcon, deathIcon;
+    private static ImageIcon trapIcon, rngTrapIcon, elixirIcon;
     private windowState currentWindow;
-    private int[] statArray; //0: ATK, 1: DEF, 2: HP
+    private Hero hero;
 
     public UI(){
         chosenClass = null;
         debugMode = false;
-        // Initialize atr points with 0
-        statArray = new int[3];
-        for(int i = 0; i < 3; i++){
-            statArray[i] = 0;
-        }
         currentWindow = windowState.START;
         createWindow(currentWindow);
     }
@@ -162,6 +158,17 @@ public class UI implements ActionListener{
             
             case STAT_MENU:
                 // Instantiate a class, get his HP and modify the attributes here, or on the engine
+                switch(chosenClass){
+                    case "Paladin":
+                        hero = new Paladin(7, 7, 6, 0, 2, chosenClass);
+                        break;
+                    case "Warrior":
+                        hero = new Warrior(7, 7, 6, 0, 2, chosenClass);
+                        break;
+                    default:
+                        hero = new Barbarian(7, 7, 6, 0, 2, chosenClass);
+                        break;
+                }
                 charFrame.setVisible(false);
                 charFrame.dispose();
                 
@@ -185,9 +192,10 @@ public class UI implements ActionListener{
                 }
 
                 statLabels = new JLabel[3];
-                statLabels[0] = new JLabel("ATK: " + statArray[0], SwingConstants.CENTER);
-                statLabels[1] = new JLabel("DEF: " + statArray[1], SwingConstants.CENTER);
-                statLabels[2] = new JLabel("HP: " + statArray[2], SwingConstants.CENTER);
+                for (int i = 0; i < 3; i++) {
+                    statLabels[i] = new JLabel();
+                }
+                updateStatLabels(hero, statLabels);
                 for(int i = 0; i < 3; i++){
                     statPanel.add(statLabels[i]);
                 }
@@ -246,14 +254,6 @@ public class UI implements ActionListener{
                         ingamePanel.add(tiles[i][j]);
                     }
                 }
-                
-                // stat labels momento
-                for(int i = 0; i < 3; i++){
-                    ingamePanel.add(statLabels[i]);
-                }
-                
-                elixirLabel = new JLabel("ELX: 3");
-                ingamePanel.add(elixirLabel);
 
                 // dica numero 1, e um pais da europa
                 tipButton = new JButton("hnt");
@@ -265,19 +265,9 @@ public class UI implements ActionListener{
                 });
                 ingamePanel.add(tipButton);
 
-                elixirButton = new JButton("elx");
-                elixirButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e){
-                        // recuperar vida hero.setHP();
-                        // diminuir elixir hero.setElixir();
-                    }
-                });
-                ingamePanel.add(elixirButton);
-
                 // start the engine, maybe multithread implementation
                 instantiateIcons();
-                gameEngine = new Engine(chosenClass, statArray, debugMode, retryGame);
+                gameEngine = new Engine(hero, debugMode, retryGame);
                 gameEngine.startGame();
 
                 moveButton = new JButton("mov");
@@ -297,6 +287,14 @@ public class UI implements ActionListener{
                 forfeitButton.addActionListener(this);
                 ingamePanel.add(forfeitButton);
                 
+                // stat labels momento
+                for(int i = 0; i < 3; i++){
+                    ingamePanel.add(statLabels[i]);
+                }
+                
+                elixirLabel = new JLabel("ELX: 3");
+                ingamePanel.add(elixirLabel);
+
                 ingameFrame.add(ingamePanel, BorderLayout.CENTER);
                 ingameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 ingameFrame.setResizable(false);
@@ -350,7 +348,7 @@ public class UI implements ActionListener{
             setCurrentWindow(windowState.STAT_MENU);
             createWindow(currentWindow);
         }else if(e.getSource().equals(readyButton)){
-            if(statArray[2] > 0){
+            if(hero.getHP() > 0){
                 retryGame = false;
                 setCurrentWindow(windowState.INGAME);
                 createWindow(currentWindow);
@@ -372,10 +370,10 @@ public class UI implements ActionListener{
     }
 
     // Update stat labels in the stat screen
-    private void updateStatLabels(int[] statArray){
-        statLabels[0].setText("ATK: " + statArray[0]);
-        statLabels[1].setText("DEF: " + statArray[1]);
-        statLabels[2].setText("HP: " + statArray[2]);
+    private void updateStatLabels(Mob m, JLabel[] stats){
+        stats[0].setText("ATK: " + m.getATK());
+        stats[1].setText("DEF: " + m.getDEF());
+        stats[2].setText("HP: " + m.getHP());
     }
 
     public static void removeAllListeners(){
@@ -406,8 +404,10 @@ public class UI implements ActionListener{
                     removeAllListeners();
                     System.out.println("RIGHT");
                     moveButton.setEnabled(true);
+
+                    // now this is some baaad code
                     if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
                     }
                 }
             });;
@@ -425,7 +425,7 @@ public class UI implements ActionListener{
                     System.out.println("LEFT");
                     moveButton.setEnabled(true);
                     if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
                     }
                 }
             });;
@@ -442,7 +442,7 @@ public class UI implements ActionListener{
                     System.out.println("DOWN");
                     moveButton.setEnabled(true);
                     if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
                     }
                 }
             });;
@@ -459,7 +459,7 @@ public class UI implements ActionListener{
                     System.out.println("UP");
                     moveButton.setEnabled(true);
                     if(Engine.checkMonster(h.getXPos(), h.getYPos())){
-                        startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
+                        if(Engine.getMonster(h.getXPos(), h.getYPos()).getHP() > 0) startBattle(h, Engine.getMonster(h.getXPos(), h.getYPos()));
                     }
                 }
             });;
@@ -483,7 +483,6 @@ public class UI implements ActionListener{
         JButton monButton = new JButton();
 
         JLabel vsLabel = new JLabel("VS", SwingConstants.CENTER);
-        //TODO: add previous elixir button
 
         // idk if i should modulate this
         switch(m.getType()){
@@ -522,14 +521,46 @@ public class UI implements ActionListener{
         battlePanel.add(vsLabel);
         battlePanel.add(monButton);
 
+        JButton elixirButton = new JButton("elx");
         battlePanel.add(atkButton);
         battlePanel.add(specialButton);
         battlePanel.add(elixirButton);
 
-        battlePanel.add(statLabels[0]);
-        battlePanel.add(statLabels[1]);
-        battlePanel.add(statLabels[2]);
+        for(int i =0; i < 3; i++){
+            battlePanel.add(statLabels[i]);
+        }
 
+        JLabel monStatLabels[] = new JLabel[3];
+        for(int i = 0; i < 3; i++){
+            monStatLabels[i] = new JLabel();
+            battlePanel.add(monStatLabels[i]);
+        }
+        updateStatLabels(m, monStatLabels);
+
+        atkButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                h.attack(h, m);
+                updateStatLabels(m, monStatLabels);
+                updateStatLabels(h, statLabels);
+                if(h.getHP() < 1){
+                    //gameover
+                    battleFrame.setVisible(false);
+                    setCurrentWindow(windowState.POSTGAME);
+                    createWindow(currentWindow);
+                }
+                if(m.getHP() < 1){
+                    //close screen
+                    battleFrame.setVisible(false);
+                    //why do i need to add labels again
+                    for(int i =0; i < 3; i++){
+                        ingamePanel.add(statLabels[i]);
+                    }
+                    ingamePanel.add(elixirLabel);
+                    ingameFrame.setVisible(true);
+                }
+            }
+        });
 
         battleFrame.add(battlePanel, BorderLayout.CENTER);
         battleFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -550,27 +581,33 @@ public class UI implements ActionListener{
         elixirLabel.setText("ELX: " + elixir);
     }
 
+    public static void happening(Mob p1, Mob p2, int totalDmg, int totalDef){
+        if(totalDmg > totalDef){
+            JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi maior que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Voce causou " + (totalDmg - totalDef) + " de dano.");
+        }else if(totalDmg == totalDef){
+            JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi igual que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Nada acontece, feijoada.");
+        }else{
+            JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi menor que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Voce tomou " + (totalDef - totalDmg) + " de dano.");
+        }
+    }
     // Metodos para incrementar e decrementar atributos
     public void incrementaAtributo(ActionEvent e){
-        int res = 0;
-        for(int i = 0; i < 3; i++){
-            res += statArray[i];
-        }
+        int res = hero.getATK() + hero.getDEF() + hero.getHP();
         //TODO: definir o numero maximo de atributos em algum lugar do codigo
         if(res < 20){
             if(e.getSource().equals(statInc[0])){
-                statArray[0]++;
+                hero.incATK();
             }
             if(e.getSource().equals(statInc[1])){
-                statArray[1]++;
+                hero.incDEF();
             }
             if(e.getSource().equals(statInc[2])){
-                statArray[2]++;
+                hero.incHP();
             }
         }else{
             JOptionPane.showMessageDialog(null, "Maximo de 20 pontos alocados!");
         }
-        updateStatLabels(statArray);
+        updateStatLabels(hero, statLabels);
     }
 
     public void instantiateIcons(){
@@ -579,6 +616,9 @@ public class UI implements ActionListener{
         skellyIcon = new ImageIcon("img/skelly.png");
         orcIcon = new ImageIcon("img/orc.png");
         kingIcon = new ImageIcon("img/skellyking.png");
+        trapIcon = new ImageIcon("img/trap.png");
+        rngTrapIcon = new ImageIcon("img/rngtrap.png");
+        elixirIcon = new ImageIcon("img/elixir.png");
     }
 
     // generic function for painting sprites on JButtons
@@ -618,27 +658,33 @@ public class UI implements ActionListener{
         }
     }
 
+    public static void drawSprite(Elixir e){
+        tiles[e.getYPos()][e.getXPos()].setIcon(elixirIcon);
+    }
+
+    public static void drawSprite(Trap e){
+        if(e.getType()) tiles[e.getYPos()][e.getXPos()].setIcon(trapIcon);
+        else tiles[e.getYPos()][e.getXPos()].setIcon(rngTrapIcon);
+    }
+
     public void decrementaAtributo(ActionEvent e){
         // no negative attributes!
-        int res = 0;
-        for(int i = 0; i < 3; i++){
-            res += statArray[i];
-        }
+        int res = hero.getATK() + hero.getDEF() + hero.getHP();
         if(res > 0){
-            if((e.getSource().equals(statDec[0])) && (statArray[0] > 0)){
-                statArray[0]--;
+            if((e.getSource().equals(statDec[0])) && (hero.getATK() > 0)){
+                hero.decATK();
             }
-            if((e.getSource().equals(statDec[1])) && (statArray[1] > 0)){
-                statArray[1]--;
+            if((e.getSource().equals(statDec[1])) && (hero.getDEF() > 0)){
+                hero.decDEF();
             }
-            if((e.getSource().equals(statDec[2])) && (statArray[2] > 0)){
-                statArray[2]--;
+            if((e.getSource().equals(statDec[2])) && (hero.getHP() > 0)){
+                hero.decHP();
             }
         }else{
-            JOptionPane.showMessageDialog(null, "Sem atributos negativos!");
+            JOptionPane.showMessageDialog(null, "Aloca uns atributos ai!");
         }
         //update jlabels
-        updateStatLabels(statArray);
+        updateStatLabels(hero, statLabels);
     }
 
     // Get and set current window
