@@ -13,12 +13,12 @@ public class UI implements ActionListener{
     }
 
     private Engine gameEngine;
-    private boolean debugMode, retryGame;
+    private boolean debugMode, retryGame, wonGame;
 
-    private String chosenClass;
+    private String chosenClass, heroName;
     private JFrame frame, charFrame, ingameFrame, statFrame, postgameFrame;
     private JPanel panel, charPanel, ingamePanel, statPanel, postgamePanel;
-    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, forfeitButton;
+    private JButton playButton, debugButton, quitButton, nextButton, readyButton, tipButton, forfeitButton, retryButton;
     private static JButton moveButton;
     private static JButton[][] tiles;
     private JLabel barbLabel, palLabel, warLabel, elixirLabel;
@@ -30,6 +30,7 @@ public class UI implements ActionListener{
     private static ImageIcon trapIcon, rngTrapIcon, elixirIcon;
     private windowState currentWindow;
     private Hero hero;
+    private int[] prevStats;
 
     public UI(){
         chosenClass = null;
@@ -160,13 +161,13 @@ public class UI implements ActionListener{
                 // Instantiate a class, get his HP and modify the attributes here, or on the engine
                 switch(chosenClass){
                     case "Paladin":
-                        hero = new Paladin(7, 7, 6, 0, 2, chosenClass);
+                        hero = new Paladin(7, 7, 6, 0, 2, heroName);
                         break;
                     case "Warrior":
-                        hero = new Warrior(7, 7, 6, 0, 2, chosenClass);
+                        hero = new Warrior(7, 7, 6, 0, 2, heroName);
                         break;
                     default:
-                        hero = new Barbarian(7, 7, 6, 0, 2, chosenClass);
+                        hero = new Barbarian(7, 7, 6, 0, 2, heroName);
                         break;
                 }
                 charFrame.setVisible(false);
@@ -226,9 +227,18 @@ public class UI implements ActionListener{
                 break;
 
             case INGAME:
-                statFrame.setVisible(false);
-                statFrame.dispose();
+                wonGame = false;
+                if(!retryGame){
+                    statFrame.setVisible(false);
+                    statFrame.dispose();
+                }
 
+                // save previous stats in case of retrying
+                prevStats = new int[3];
+                prevStats[0] = hero.getATK();
+                prevStats[1] = hero.getDEF();
+                prevStats[2] = hero.getHP();
+                
                 // Creating ingame frame
                 ingameFrame = new JFrame("Dungeon Fighter - Ingame");
 
@@ -291,7 +301,7 @@ public class UI implements ActionListener{
                 for(int i = 0; i < 3; i++){
                     ingamePanel.add(statLabels[i]);
                 }
-                
+                updateStatLabels(hero, statLabels);
                 elixirLabel = new JLabel("ELX: 0");
                 ingamePanel.add(elixirLabel);
 
@@ -302,6 +312,7 @@ public class UI implements ActionListener{
                 ingameFrame.setVisible(true);
                 ingameFrame.setLocationRelativeTo(null);
 
+                System.out.println(heroName);
                 break;
             
             case POSTGAME:
@@ -314,16 +325,23 @@ public class UI implements ActionListener{
                 // Creating postgame panel
                 postgamePanel = new JPanel();
                 postgamePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
-                postgamePanel.setLayout(new GridLayout(0, 10));
+                postgamePanel.setLayout(new GridLayout(3, 0));
                 
+                JLabel winLoseLabel = new JLabel();
                 // show if the user won or lost, as well as buttons to restart game
                 // (same mob pos(and count?)) or new game (new mob pos (and count?))
                 // gameEngine.getFinalState() returns 1 if won, 0 if lost
-                if(gameEngine.getFinalState()){
-                    // do win shit
+                if(wonGame){
+                    winLoseLabel.setText("Voce ganhou!");
                 }else{
-                    // do lose shit
+                    winLoseLabel.setText("Voce perdeu!");
                 }
+
+                retryButton = new JButton("Rejogar");
+                retryButton.addActionListener(this);
+                postgamePanel.add(winLoseLabel);
+                postgamePanel.add(retryButton);
+                postgamePanel.add(quitButton);
                 postgameFrame.add(postgamePanel);
                 postgameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 postgameFrame.setResizable(false);
@@ -345,6 +363,7 @@ public class UI implements ActionListener{
             setCurrentWindow(windowState.CHAR_SELECTION);
             createWindow(currentWindow);
         }else if(e.getSource().equals(nextButton)){
+            heroName = nameBox.getText();
             setCurrentWindow(windowState.STAT_MENU);
             createWindow(currentWindow);
         }else if(e.getSource().equals(readyButton)){
@@ -366,6 +385,15 @@ public class UI implements ActionListener{
             // apparently EXIT_ON_CLOSE just calls System.exit(0) anyways lmao
             JOptionPane.showMessageDialog(null, "Quitting the game!");
             System.exit(0);
+        }else if(e.getSource().equals(retryButton)){
+            hero.setATK(prevStats[0]);
+            hero.setDEF(prevStats[1]);
+            hero.setHP(prevStats[2]);
+            postgameFrame.setVisible(false);
+            postgameFrame.dispose();
+            retryGame = true;
+            setCurrentWindow(windowState.INGAME);
+            createWindow(currentWindow);
         }
     }
 
@@ -581,14 +609,20 @@ public class UI implements ActionListener{
                     createWindow(currentWindow);
                 }
                 if(m.getHP() < 1){
-                    //close screen
                     battleFrame.setVisible(false);
-                    //why do i need to add labels again
-                    for(int i = 0; i < 3; i++){
-                        ingamePanel.add(statLabels[i]);
+                    if(m instanceof Boss){
+                        //epic win
+                        wonGame = true;
+                        setCurrentWindow(windowState.POSTGAME);
+                        createWindow(currentWindow);
+                    }else{
+                        //resume the game
+                        for(int i = 0; i < 3; i++){
+                            ingamePanel.add(statLabels[i]);
+                        }
+                        ingamePanel.add(elixirLabel);
+                        ingameFrame.setVisible(true);
                     }
-                    ingamePanel.add(elixirLabel);
-                    ingameFrame.setVisible(true);
                 }
             }
         });

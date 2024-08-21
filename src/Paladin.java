@@ -7,8 +7,11 @@ public class Paladin extends Hero {
     // Special attacks (can only be used once per fight)
     // idk if it need a this keyword, ask around
     public void specialAttack(Mob p1, Mob p2){
+        int hpBefore = this.HP;
         if(this.HP < this.totalHP/2){
             this.HP += this.totalHP/2;
+        }else if(this.HP > this.totalHP){
+            this.HP = hpBefore;
         }else{
             this.HP = this.totalHP;
         }

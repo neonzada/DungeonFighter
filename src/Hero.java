@@ -24,6 +24,10 @@ public abstract class Hero extends Mob{
         storedElixir.add(e);
     }
 
+    public void resetElixir(){
+        storedElixir.removeAll(storedElixir);
+    }
+
     public void consumeElixir(){
         if(!storedElixir.isEmpty()){
             incHP(3);

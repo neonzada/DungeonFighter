@@ -123,6 +123,8 @@ public class Engine{
     }
 
     public void spawnPlayer(){
+        hero.setPos(0, 2);
+        hero.resetElixir();
         UI.drawSprite(hero);
     }
 
