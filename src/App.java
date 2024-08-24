@@ -4,7 +4,7 @@
 // tips reveal traps in the current column
 // elixir
 public class App{
-    public static void main(String[] args){
-        new UI();
-    }
+	public static void main(String[] args){
+		new UI();
+	}
 }
