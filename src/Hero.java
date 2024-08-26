@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 
 public abstract class Hero extends Mob{
-	protected int xpos, ypos;
 	protected ArrayList<Elixir> storedElixir;
 	protected String name;
 	public Hero(int ATK, int DEF, int HP, int xpos, int ypos, String name){

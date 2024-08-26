@@ -180,8 +180,6 @@ public class UI implements ActionListener{
 				statPanel.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
 				statPanel.setLayout(new GridLayout(0, 3));
 
-				// Send ATK, DEF, HP as an int vector?
-				//Local variable i defined in an enclosing scope must be final or effectively final
 				statInc = new JButton[3];
 				for(int i = 0; i < 3; i++){
 					statInc[i] = new JButton("+");
@@ -241,10 +239,8 @@ public class UI implements ActionListener{
 				prevStats[1] = hero.getDEF();
 				prevStats[2] = hero.getHP();
 				
-				// Creating ingame frame
 				ingameFrame = new JFrame("Dungeon Fighter - Ingame");
 
-				// Creating ingame panel
 				ingamePanel = new JPanel();
 				ingamePanel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
 				ingamePanel.setLayout(new GridLayout(0, 10));
@@ -293,8 +289,6 @@ public class UI implements ActionListener{
 					public void actionPerformed(ActionEvent e){
 						highlightAvailableMoves(gameEngine.getHero());
 						moveButton.setEnabled(false);
-						// movestate: highlights possible movements
-						// check if a move if valid before moving
 					}
 				});
 				ingamePanel.add(moveButton);
@@ -453,6 +447,7 @@ public class UI implements ActionListener{
 		}
 	}
 	// bad code incoming
+  // highlights all possible moves, adding action listeners to them
 	public void highlightAvailableMoves(Hero h){
 		removeAllListeners();
 		System.out.println("X: " + h.getXPos() + "Y: " + h.getYPos());
@@ -525,7 +520,7 @@ public class UI implements ActionListener{
 
 		JFrame battleFrame = new JFrame("Dungeon Fighter - Battle");
 		JPanel battlePanel = new JPanel();
-		battlePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		battlePanel.setBorder(BorderFactory.createEmptyBorder(25, 50, 25, 50));
 		battlePanel.setLayout(new GridLayout(0, 5));
 
 		JButton atkButton = new JButton("atk");
@@ -535,25 +530,31 @@ public class UI implements ActionListener{
 
 		JLabel vsLabel = new JLabel("VS", SwingConstants.CENTER);
 
-		// idk if i should modulate this
+    JLabel monName = new JLabel(m.getClass().getSimpleName(), SwingConstants.RIGHT);
 		switch(m.getType()){
 			case 0:
 				monButton.setIcon(slimeIcon);
+        monName.setText("Slime");
 				break;
 			case 1:
-				monButton.setIcon(goblinIcon);
+        monButton.setIcon(goblinIcon);
+        monName.setText("Goblin");
 				break;
 			case 2:
 				monButton.setIcon(skellyIcon);
+        monName.setText("Esqueleto");
 				break;
 			case 3:
 				monButton.setIcon(orcIcon);
+        monName.setText("Orc");
 				break;
 			case 4:
 				monButton.setIcon(kingIcon);
+        monName.setText("Rei Esqueleto");
 				break;
 			default:
 				monButton.setIcon(deathIcon);
+        monName.setText("Cavaleiro da Morte");
 				break;
 		}
 		if(h instanceof Barbarian){
@@ -573,7 +574,6 @@ public class UI implements ActionListener{
 		battlePanel.add(heroButton);
 		battlePanel.add(vsLabel);
 		battlePanel.add(monButton);
-		JLabel monName = new JLabel(m.getClass().getSimpleName(), SwingConstants.RIGHT);
 		battlePanel.add(monName);
 
 		JButton elixirButton = new JButton("elx");
@@ -610,7 +610,6 @@ public class UI implements ActionListener{
 				updateStatLabels(m, monStatLabels);
 				updateStatLabels(h, statLabels);
 				if(h.getHP() < 1){
-					//gameover
 					battleFrame.setVisible(false);
 					setCurrentWindow(windowState.POSTGAME);
 					createWindow(currentWindow);
@@ -618,12 +617,10 @@ public class UI implements ActionListener{
 				if(m.getHP() < 1){
 					battleFrame.setVisible(false);
 					if(m instanceof Boss){
-						//epic win
 						wonGame = true;
 						setCurrentWindow(windowState.POSTGAME);
 						createWindow(currentWindow);
 					}else{
-						//resume the game
 						for(int i = 0; i < 3; i++){
 							ingamePanel.add(statLabels[i]);
 						}
@@ -645,13 +642,11 @@ public class UI implements ActionListener{
 				updateStatLabels(h, statLabels);
 				specialButton.setEnabled(false);
 				if(h.getHP() < 1){
-					//gameover
 					battleFrame.setVisible(false);
 					setCurrentWindow(windowState.POSTGAME);
 					createWindow(currentWindow);
 				}
 				if(m.getHP() < 1){
-					//close screen
 					battleFrame.setVisible(false);
 					//why do i need to add labels again
 					for(int i = 0; i < 3; i++){
@@ -700,6 +695,7 @@ public class UI implements ActionListener{
 			JOptionPane.showMessageDialog(null, "O dano de " + p1.getClass().getSimpleName()  + " (" + totalDmg + ") foi menor que a defesa de " + p2.getClass().getSimpleName() + " (" + totalDef + "). Voce tomou " + (totalDef - totalDmg) + " de dano.");
 		}
 	}
+
 	// Metodos para incrementar e decrementar atributos
 	public void incrementaAtributo(ActionEvent e){
 		int res = hero.getATK() + hero.getDEF() + hero.getHP();
@@ -725,13 +721,13 @@ public class UI implements ActionListener{
 		skellyIcon = new ImageIcon("img/skelly.png");
 		orcIcon = new ImageIcon("img/orc.png");
 		kingIcon = new ImageIcon("img/skellyking.png");
+    deathIcon = new ImageIcon("img/deathknight.png");
 		trapIcon = new ImageIcon("img/trap.png");
 		rngTrapIcon = new ImageIcon("img/rngtrap.png");
 		elixirIcon = new ImageIcon("img/elixir.png");
 	}
 
 	// generic function for painting sprites on JButtons
-	// wanted to make one even more generic but meh
 	public static void drawSprite(Mob e){
 		if(e instanceof Monster){
 			switch(((Monster)e).getType()){

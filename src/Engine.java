@@ -38,7 +38,7 @@ public class Engine{
 	}
 	
 	public void startGame(){
-		if(!retryGame) getSeed(mobNumber);
+		if(!retryGame) getSeed();
 		spawnPlayer();
 		spawnMobs(mobNumber);
 		spawnTraps(trapNumber);
@@ -48,7 +48,7 @@ public class Engine{
 
 	// because the game needs to repeat every attribute and monster position,
 	// let's store those values to reuse them in case of a "retry" signal
-	public void getSeed(int mobNumber){
+	public void getSeed(){
 		Random rand = new Random();
 		monATK = rand.nextInt(2);
 		monDEF = rand.nextInt(2);
@@ -153,7 +153,7 @@ public class Engine{
 			base_bossHP + bossHP,
 			9,
 			2,
-			3 + rand.nextInt(2)
+			3 + rand.nextInt(3)
 		);
 		UI.drawSprite(bossy);
 	}
