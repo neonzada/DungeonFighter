@@ -238,4 +238,9 @@ public class Engine{
 		}
 		return found;
 	}
+
+  public static boolean getEscape(){
+    Random rand = new Random();
+    return rand.nextInt(4) == 1 ? true : false;
+  }
 }

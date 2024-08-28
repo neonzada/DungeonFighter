@@ -1,10 +1,37 @@
 ---
 
 ---
+# Introdução
+Dungeon Fighter é um jogo de RPG, ambientado em uma era medieval, onde você percorre um tabuleiro 5x10, desviando de armadilhas, derrotando monstros e coletando elixires ao longo do caminho. Você joga como um bárbaro, paladino ou guerreiro, cada classe com suas particularidades, e o seu objetivo é derrotar o monstro no fim do tabuleiro.
+Esse projeto foi feito em Java, com a biblioteca gráfica Swing, para a disciplina de POO.
+O projeto utiliza o _spritepack_ 32rogues, disponibilizado gratuitamente por Seth Boyles (https://sethbb.itch.io/32rogues)
+<br>
+# Compilando
+Para compilar o projeto, é necessário explicitar o _classpath_ tanto na hora de invocar o compilador, quando na hora de rodar o aplicativo. 
+1. Navegue até o diretório /src/
+2. Compile com `javac -d bin -cp bin *.java`
+3. Execute com `java -cp bin App`
+O projeto foi estruturado desta maneira a fim de esconder arquivos `.class` tanto do usuário quanto do desenvolvedor que for trabalhar no código.
+<br>
+# Como jogar
+1. Para começar o jogo, clique em **PLAY** (clicar no botão **DEBUG** irá alternar entre o modo DEBUG ou modo normal, o estado atual será printado no console)
+2. Escolha sua classe (obrigatório) e insira seu nome (opcional).
+3. Distribua seus atributos da maneira que achar mais conveniente (máximo de 20 atributos). Note que as classes já vem com o balanceamento ideal.
+4. Uma vez na tela de jogo você terá três opções: 
+	- **hnt** (_hint_, te dá até 3 dicas sobre as armadilhas na coluna);
+	- **mov** (_move_, ao clicar nesse botão, os movimentos possíveis serão mostrados e você poderá se mover para cada um deles);
+	- **hlt** (_halt_, para o jogo, conta como uma derrota).
+5. Durante a batalha, você terá quatro opções:
+	- **atk** (_attack_, ataca o inimigo)
+	- **ex** (_extra_, ou ataque especial)
+	- **elx** (_elixir_, recupera vida)
+	- **esc** (_escape_, tenta escapar da batalha, deixando o monstro de lado)
+6. Se você derrotar o chefão, você ganha. Se você morrer em qualquer ponto, você perde.
+<br>
 # Diagrama de classes
 Para começar esse projeto, é interessante ter uma ideia de como as classes serão organizadas, bem como das interações entre elas. Com a proposta de criar um RPG, o conceito de diversas classes de personagens é óbvio, então comecei a traçar um diagrama preliminar.
 ![[diagrama.png]]
-Olhando pro diagrama, notei que o chefão não se diferenciava do monstro normal, portanto, foi implementado um especial para o chefão, onde ele regenera 1HP a cada dois turnos.
+Olhando pro diagrama, notei que o chefão não se diferenciava do monstro normal, portanto, foi implementado um especial para o chefão, onde ele regenera 1HP a cada dois ataques que ele não conseguir infligir dano ao jogador.
 Também foi criado classes para o elixir e as armadilhas, além de duas classes UI e Engine para separar a interface gráfica da lógica do jogo, que serão discutidas abaixo.
 <br>
 # Criando a janela
@@ -61,7 +88,7 @@ public enum windowState{
   POSTGAME
 }
 ```
-Com isso pronto, fiz com que o método _createWindow_ recebesse como argumento um _windowState_ e desenhe a tela baseado neste argumento:
+Com isso pronto, fiz com que o método `createWindow()` recebesse como argumento um _windowState_ e desenhe a tela baseado neste argumento:
 ```java
 public void createWindow(windowState currentWindow){
   System.out.println(getCurrentWindow());
@@ -104,7 +131,7 @@ gameEngine.startGame();
 Com isso, estamos prontos para começar a programar a lógica do jogo.
 <br>
 # Funcionamento da engine
-Como mencionei anteriormente, o objetivo dessa classe é realizar o trabalho "pesado", como calcular posições de elementos no tabuleiro e inicializar os monstros. A função _startGame()_ é a que realiza esses comandos.
+Como mencionei anteriormente, o objetivo dessa classe é realizar o trabalho "pesado", como calcular posições de elementos no tabuleiro e inicializar os monstros. A função `startGame()` é a que realiza esses comandos.
 ```java
 public void startGame(){
   if(!retryGame) getSeed();
@@ -115,10 +142,10 @@ public void startGame(){
   spawnBoss();
 }
 ```
-Quando o jogo começa, várias funções são executadas. Vamos começar pela mais simples: _spawnPlayer()_ define a posição do jogador, tira todos elixir da bolsa dele e desenha o sprite no tabuleiro.
-A função _getSeed()_ inicializa as arrays de posições de todos os outros elementos, e os coloca em uma posição única (não habitada por outros elementos), além de também inicializar incrementos aleatórios nos atributos dos monstros (uma implementação básica de dificuldade). Ela só é executada quando a flag _retryGame_ não é ativada, pois quando o jogador escolhe a opção de rejogar, os elementos não mudam de posição.
-As funções _spawnMobs()_, _spawnTraps()_, _spawnElixir()_ e _spawnBoss()_ instanciam de fato os objetos e atribuem suas posições com as posições calculadas na _getSeed()_. Dentro dessas funções, o método _drawSprite()_ só é chamado se a flag _debugMode_ está ativada, caso contrário, os monstros ficam "invisíveis".
-Abaixo segue a implementação de _spawnMobs()_:
+Quando o jogo começa, várias funções são executadas. Vamos começar pela mais simples: `spawnPlayer()` define a posição do jogador, tira todos elixir da bolsa dele e desenha o sprite no tabuleiro.
+A função `getSeed()` inicializa as arrays de posições de todos os outros elementos, e os coloca em uma posição única (não habitada por outros elementos), além de também inicializar incrementos aleatórios nos atributos dos monstros (uma implementação básica de dificuldade). Ela só é executada quando a flag `retryGame` não é ativada, pois quando o jogador escolhe a opção de rejogar, os elementos não mudam de posição.
+As funções `spawnMobs()`, `spawnTraps()`, `spawnElixir()` e `spawnBoss()` instanciam de fato os objetos e atribuem suas posições com as posições calculadas na `getSeed()`. Dentro dessas funções, o método `drawSprite()` só é chamado se a flag `debugMode` está ativada, caso contrário, os monstros ficam "invisíveis".
+Abaixo segue a implementação de `spawnMobs()`:
 ```java
 public void spawnMobs(int mobNum){
   monArr = new Monster[mobNum];
@@ -142,7 +169,7 @@ Os outros métodos seguem uma estrutura similar. Abaixo é como o tabuleiro é m
 # Movimentação e dificuldades
 Com todos os monstros no tabuleiro, agora é a hora de implementar a movimentação do personagem. Primeiramente pensei em deixar todos os botões clicáveis, checando apenas a validade do movimento, porém decidi fazer um sistema onde o jogador clica no comando de movimento e é apresentado os possíveis movimentos, adicionando _ActionListeners_ neles. Isso provou ser um pouco mais complicado, porém eu gostei do resultado final.
 
-Uma das dificuldades foi detectar quais botões no vetor a função _highlightAvailableMoves_ deveria acessar. No começo, estava acessando botões fora do vetor, o que causava um _ArrayOutOfBounds_ exception. Porém, após tratar os _edge cases_, a movimentação se comportou bem. O tratamento desses casos se deu com 4 checagens, cada uma delas se referindo a um canto da tela. Por exemplo: se o personagem está na parede da esquerda (como retratado na imagem abaixo), 3 dos 4 condicionais passam - o que não passa é o que checa se o personagem está na parede da esquerda - portanto apenas 3 movimentos são possíveis, e consequentemente destacados.
+Uma das dificuldades foi detectar quais botões no vetor a função `highlightAvailableMoves()` deveria acessar. No começo, estava acessando botões fora do vetor, o que causava um _ArrayOutOfBounds_ exception. Porém, após tratar os _edge cases_, a movimentação se comportou bem. O tratamento desses casos se deu com 4 checagens, cada uma delas se referindo a um canto da tela. Por exemplo: se o personagem está na parede da esquerda (como retratado na imagem abaixo), 3 dos 4 condicionais passam - o que não passa é o que checa se o personagem está na parede da esquerda - portanto apenas 3 movimentos são possíveis, e consequentemente destacados.
 ![[Pasted image 20240826115922.png]]
 Outra dificuldade no movimento do personagem foi a remoção de _ActionListeners_ previamente adicionados. Se o personagem se mover para a direita, por exemplo, as posições de cima e de baixo continuarão com _Listeners_ nelas, tornando possível acessar botões fora do vetor. Para contornar esse problema, toda vez que o botão de movimento é pressionado, uma função retira todos os _ActionListeners_ do tabuleiro.
 <br>
@@ -156,4 +183,3 @@ A função também checa se é o chefão ou não, uma vez que, ao derrotar o che
 <br>
 # Conclusão
 Realizar esse trabalho foi uma ótima atividade para mim, pois nunca tinha feito algo em uma escala tão grande. Durante o desenvolvimento do jogo aprendi muito sobre como estruturar um projeto, como aplicar os conceitos de POO em aplicações grandes e como organizar o pensamento para lidar com tantas classes e métodos. Além disso, aprendi muitos conceitos de interface gráfica ao longo do caminho, assim como de Java em geral.
-<br>

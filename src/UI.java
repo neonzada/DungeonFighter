@@ -582,6 +582,11 @@ public class UI implements ActionListener{
 		battlePanel.add(specialButton);
 		battlePanel.add(elixirButton);
 		battlePanel.add(escapeButton);
+    if(m instanceof Boss){
+      escapeButton.setEnabled(false);
+    }else{
+      escapeButton.setEnabled(true);
+    }
 
 		JLabel chanceLabel = new JLabel("(25%)");
 		battlePanel.add(chanceLabel);
@@ -667,6 +672,24 @@ public class UI implements ActionListener{
 			}
 		});
 
+    escapeButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e){
+        if (Engine.getEscape()){
+          JOptionPane.showMessageDialog(null, "Você escapou com sucesso!");
+          battleFrame.setVisible(false);
+          for(int i = 0; i < 3; i++){
+            ingamePanel.add(statLabels[i]);
+          }
+          ingamePanel.add(elixirLabel);
+          ingameFrame.setVisible(true);
+        }else{
+          JOptionPane.showMessageDialog(null, "Tentativa de fuga falhou!");
+          escapeButton.setEnabled(false);
+        }
+      }
+    });
+
 		battleFrame.add(battlePanel, BorderLayout.CENTER);
 		battleFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		battleFrame.setResizable(false);
@@ -696,6 +719,9 @@ public class UI implements ActionListener{
 		}
 	}
 
+  public static void bossRegenAlert(){
+    JOptionPane.showMessageDialog(null, "O chefão regenerou 1HP!", "Fúria!", JOptionPane.PLAIN_MESSAGE);
+  }
 	// Metodos para incrementar e decrementar atributos
 	public void incrementaAtributo(ActionEvent e){
 		int res = hero.getATK() + hero.getDEF() + hero.getHP();
