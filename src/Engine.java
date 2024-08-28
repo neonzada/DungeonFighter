@@ -68,8 +68,8 @@ public class Engine{
 		elixirXPos = new int[elixirNumber];
 		elixirYPos = new int[elixirNumber];
 
-		usedXPos = new int[totalNumber]; //new int[totalNumber] para armazenar as posicoes usadas pelos monstros, traps e elixir
-		usedYPos = new int[totalNumber]; //dai na proxima checagem (trap) so adicionar mobNumber + i em cada iteracao
+		usedXPos = new int[totalNumber];
+		usedYPos = new int[totalNumber];
 
 		for(int i = 0; i < mobNumber; i++){
 			// roll the dice

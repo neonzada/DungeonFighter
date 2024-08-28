@@ -4,7 +4,7 @@ public class Monster extends Mob{
 		super(ATK, DEF, HP, xpos, ypos);
 		this.type = type;
 	}
-	// Normal monster, random image and random HP (balanced)
+
 	public int getType(){
 		return this.type;
 	}

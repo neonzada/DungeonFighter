@@ -53,7 +53,7 @@ public class UI implements ActionListener{
 				panel.setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
 				panel.setLayout((new GridLayout(3,1)));
 
-				// Not worth creating an array of buttons for those three
+				// not worth creating an array of buttons for those three
 				// Play button
 				playButton = new JButton("PLAY");
 				playButton.setPreferredSize(new Dimension(150, 50));
@@ -94,15 +94,10 @@ public class UI implements ActionListener{
 				palIcon = new ImageIcon("img/paladin.png");
 				warIcon = new ImageIcon("img/warrior.png");
 
-
-				// We have to update the text, as well as make the 'next' button
-				// clickable only if there's a class selected. (name optional?)
 				nextButton = new JButton("NEXT");
 				nextButton.setEnabled(false);
 				nextButton.addActionListener(this);
 
-				// Let's try not adding the buttons to the class attributes,
-				// but instead just using them in this specific context here
 				JButton barbButton = new JButton(barbIcon);
 				JButton palButton = new JButton(palIcon);
 				JButton warButton = new JButton(warIcon);
@@ -134,7 +129,6 @@ public class UI implements ActionListener{
 					}
 				});
 
-				// exception handling with jtextfield maybe?
 				nameBox = new JTextField("NAME");
 				nameBox.setPreferredSize(new Dimension(100, 20));
 				barbLabel = new JLabel("Barbarian", SwingConstants.CENTER);
@@ -329,9 +323,6 @@ public class UI implements ActionListener{
 				postgamePanel.setLayout(new GridLayout(3, 0));
 				
 				JLabel winLoseLabel = new JLabel();
-				// show if the user won or lost, as well as buttons to restart game
-				// (same mob pos(and count?)) or new game (new mob pos (and count?))
-				// gameEngine.getFinalState() returns 1 if won, 0 if lost
 				if(wonGame){
 					winLoseLabel.setText("Voce ganhou!");
 				}else{
@@ -382,7 +373,6 @@ public class UI implements ActionListener{
 			setCurrentWindow(windowState.POSTGAME);
 			createWindow(currentWindow);
 		}else if(e.getSource().equals(quitButton)){
-			// quit (should I call System.exit(0)?)
 			// apparently EXIT_ON_CLOSE just calls System.exit(0) anyways lmao
 			JOptionPane.showMessageDialog(null, "Quitting the game!");
 			System.exit(0);
@@ -446,7 +436,6 @@ public class UI implements ActionListener{
 			}
 		}
 	}
-	// bad code incoming
   // highlights all possible moves, adding action listeners to them
 	public void highlightAvailableMoves(Hero h){
 		removeAllListeners();
@@ -722,7 +711,7 @@ public class UI implements ActionListener{
   public static void bossRegenAlert(){
     JOptionPane.showMessageDialog(null, "O chefão regenerou 1HP!", "Fúria!", JOptionPane.PLAIN_MESSAGE);
   }
-	// Metodos para incrementar e decrementar atributos
+
 	public void incrementaAtributo(ActionEvent e){
 		int res = hero.getATK() + hero.getDEF() + hero.getHP();
 		if(res < 20){

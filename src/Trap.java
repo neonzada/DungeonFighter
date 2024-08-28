@@ -35,7 +35,6 @@ public class Trap{
 		return dmg;
 	}
 	// Setters and getters
-	// i wish i could extend Mob but i have no HP to give this trap
 	public void setPos(int xpos, int ypos){
 		this.xpos = xpos;
 		this.ypos = ypos;
